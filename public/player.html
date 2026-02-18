@@ -2,66 +2,67 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Katılımcı Paneli</title>
+    <title>Katılımcı Ekranı</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .selected { border: 4px solid white !important; transform: scale(1.02); z-index: 10; }
-        .dimmed { opacity: 0.25; }
+        .selected { border: 4px solid white !important; transform: scale(1.05); z-index: 10; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .dimmed { opacity: 0.2; }
     </style>
 </head>
 <body class="bg-slate-100 h-screen overflow-hidden font-sans flex flex-col">
 
-    <div id="top-bar" class="hidden bg-slate-900 text-white p-3 flex justify-between items-center shadow-lg">
-        <span id="p-name" class="font-bold truncate max-w-[140px]"></span>
-        <div class="bg-indigo-600 px-4 py-1 rounded-full font-black text-sm">KALAN: <span id="p-timer">10</span>s</div>
+    <div id="top-bar" class="hidden bg-slate-900 text-white p-3 flex justify-between items-center shadow-md">
+        <span id="p-name" class="font-bold truncate max-w-[120px] text-xs"></span>
+        <div class="bg-indigo-600 px-3 py-1 rounded-full font-black text-[10px]">SÜRE: <span id="p-timer">10</span>s</div>
     </div>
 
-    <div id="login-screen" class="flex-grow flex flex-col items-center justify-center p-8 space-y-6">
-        <h1 class="text-3xl font-black text-slate-800 text-center uppercase tracking-tighter">Klinik Oturum Girişi</h1>
-        <input type="text" id="nickname" placeholder="AD SOYAD" class="w-full p-5 text-xl text-center border-4 border-slate-300 rounded-3xl focus:border-indigo-500 outline-none uppercase font-bold">
-        <button onclick="join()" class="w-full bg-indigo-700 text-white py-5 rounded-3xl text-2xl font-black shadow-xl active:scale-95 transition-all">KATIL</button>
+    <div id="login-screen" class="flex-grow flex flex-col items-center justify-center p-6 space-y-6">
+        <h1 class="text-3xl font-black text-slate-800 text-center tracking-tighter">KLİNİK OTURUM</h1>
+        <input type="text" id="nickname" placeholder="AD SOYAD" class="w-full p-4 text-lg text-center border-4 border-slate-300 rounded-2xl outline-none focus:border-indigo-600 uppercase font-bold">
+        <button onclick="join()" class="w-full bg-indigo-700 text-white py-4 rounded-2xl text-xl font-black shadow-lg active:scale-95 transition-all">KATIL</button>
     </div>
 
-    <div id="waiting-screen" class="hidden flex-grow flex flex-col items-center justify-center bg-slate-800 text-white p-10 text-center">
+    <div id="waiting-screen" class="hidden flex-grow flex flex-col items-center justify-center bg-slate-800 text-white p-6 text-center">
         <div class="animate-pulse space-y-4">
-            <h2 class="text-3xl font-black text-indigo-400">BAĞLANTI BAŞARILI</h2>
-            <p class="text-lg opacity-60 italic">Vaka analizi başlatılması bekleniyor...</p>
+            <h2 class="text-2xl font-black text-indigo-400">BAĞLANDI</h2>
+            <p class="text-sm opacity-50 italic">Soru bekleniyor...</p>
         </div>
     </div>
 
-    <div id="game-controller" class="hidden flex-grow flex flex-col p-3 space-y-3">
-        <div class="bg-white p-4 rounded-3xl shadow-xl border-b-8 border-indigo-200">
-            <h2 id="q-text" class="text-lg font-bold text-center leading-tight text-slate-800"></h2>
+    <div id="game-controller" class="hidden flex-grow flex flex-col p-2 space-y-2">
+        <div class="bg-white p-3 rounded-2xl shadow-md">
+            <h2 id="q-text" class="text-sm font-bold text-center leading-tight text-slate-800"></h2>
         </div>
-        <div class="flex-grow grid grid-cols-1 gap-2">
-            <button onclick="ans(0)" id="b-0" class="bg-rose-500 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
-                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">A</span> <span class="t truncate"></span>
+        <div class="flex-grow grid grid-cols-1 gap-1.5">
+            <button onclick="ans(0)" id="b-0" class="bg-rose-500 text-white p-3 rounded-xl font-black text-xs text-left flex items-center h-[18%] transition-all">
+                <span class="bg-black/20 px-2 py-0.5 rounded mr-3">A</span> <span class="t truncate"></span>
             </button>
-            <button onclick="ans(1)" id="b-1" class="bg-sky-500 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
-                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">B</span> <span class="t truncate"></span>
+            <button onclick="ans(1)" id="b-1" class="bg-sky-500 text-white p-3 rounded-xl font-black text-xs text-left flex items-center h-[18%] transition-all">
+                <span class="bg-black/20 px-2 py-0.5 rounded mr-3">B</span> <span class="t truncate"></span>
             </button>
-            <button onclick="ans(2)" id="b-2" class="bg-amber-500 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
-                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">C</span> <span class="t truncate"></span>
+            <button onclick="ans(2)" id="b-2" class="bg-amber-500 text-white p-3 rounded-xl font-black text-xs text-left flex items-center h-[18%] transition-all">
+                <span class="bg-black/20 px-2 py-0.5 rounded mr-3">C</span> <span class="t truncate"></span>
             </button>
-            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
-                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">D</span> <span class="t truncate"></span>
+            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 text-white p-3 rounded-xl font-black text-xs text-left flex items-center h-[18%] transition-all">
+                <span class="bg-black/20 px-2 py-0.5 rounded mr-3">D</span> <span class="t truncate"></span>
             </button>
         </div>
     </div>
 
-    <div id="stats-screen" class="hidden flex-grow flex flex-col bg-slate-900 text-white p-6">
-        <h2 id="res-status" class="text-4xl font-black text-center mb-6"></h2>
-        <div class="bg-indigo-900/40 p-5 rounded-2xl border-l-8 border-indigo-500 mb-8">
-            <p class="text-indigo-300 text-xs font-bold uppercase mb-1">DOĞRU KLİNİK YAKLAŞIM:</p>
-            <p id="correct-txt" class="text-xl font-black"></p>
+    <div id="stats-screen" class="hidden flex-grow flex flex-col bg-slate-950 text-white p-5">
+        <h2 id="res-status" class="text-3xl font-black text-center mb-4"></h2>
+        <div class="bg-white/5 p-4 rounded-xl border-l-4 border-indigo-500 mb-6">
+            <p class="text-indigo-400 text-[10px] font-bold uppercase mb-1">DOĞRU YANIT:</p>
+            <p id="correct-txt" class="text-sm font-black text-indigo-100"></p>
         </div>
-        <div id="mini-graph" class="space-y-4"></div>
+        <div id="mini-graph" class="space-y-3 mb-4"></div>
+        <p class="text-center text-[10px] opacity-40 animate-pulse">Puan tablosu hazırlanıyor...</p>
     </div>
 
-    <div id="leaderboard-screen" class="hidden flex-grow flex flex-col bg-indigo-950 text-white p-6">
-        <h2 class="text-3xl font-black text-center text-indigo-400 mb-8 tracking-tighter">BAŞARI SIRALAMASI</h2>
-        <div id="lb-list" class="space-y-3"></div>
+    <div id="leaderboard-screen" class="hidden flex-grow flex flex-col bg-indigo-950 text-white p-5">
+        <h2 class="text-2xl font-black text-center text-indigo-400 mb-6 uppercase">Sıralama</h2>
+        <div id="lb-list" class="space-y-2"></div>
     </div>
 
     <script>
@@ -105,7 +106,7 @@
             const myA = d.playersAnswers[socket.id];
             const s = document.getElementById('res-status');
             s.innerText = (myA === d.correctIndex) ? "BAŞARILI ✅" : "HATALI ❌";
-            s.className = `text-4xl font-black text-center mb-6 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
+            s.className = `text-3xl font-black text-center mb-4 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
             document.getElementById('correct-txt').innerText = d.correctText;
             
             const g = document.getElementById('mini-graph'); g.innerHTML = '';
@@ -113,12 +114,12 @@
             const max = Math.max(...d.stats) || 1;
             d.stats.forEach((c, i) => {
                 const w = (c/max)*100;
-                g.innerHTML += `<div class="flex items-center gap-3">
-                    <div class="w-4 font-bold text-xs">${['A','B','C','D'][i]}</div>
-                    <div class="flex-grow h-4 bg-white/10 rounded-full overflow-hidden">
+                g.innerHTML += `<div class="flex items-center gap-2">
+                    <div class="w-4 font-bold text-[10px]">${['A','B','C','D'][i]}</div>
+                    <div class="flex-grow h-3 bg-white/10 rounded-full overflow-hidden">
                         <div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div>
                     </div>
-                    <div class="w-4 text-right text-xs">${c}</div>
+                    <div class="w-4 text-right text-[10px]">${c}</div>
                 </div>`;
             });
         });
@@ -126,9 +127,9 @@
         socket.on('show-leaderboard', (list) => {
             toggle('leaderboard-screen');
             document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `
-                <div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-600 ring-2 ring-white' : 'bg-white/5'} p-4 rounded-2xl">
-                    <span class="font-black text-indigo-300">#${i+1} ${p.nickname}</span>
-                    <span class="font-bold">${Math.floor(p.score)} P</span>
+                <div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-600 ring-1 ring-white' : 'bg-white/5'} p-3 rounded-xl">
+                    <span class="font-bold text-xs">#${i+1} ${p.nickname}</span>
+                    <span class="font-black text-xs text-emerald-400">${Math.floor(p.score)} P</span>
                 </div>
             `).join('');
         });

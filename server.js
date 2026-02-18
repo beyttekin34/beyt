@@ -10,7 +10,6 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ana adrese girenleri otomatik oyuncu ekranına yönlendirir
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'player.html'));
 });
@@ -23,15 +22,22 @@ let timer;
 let timeLeft = 10;
 
 io.on('connection', (socket) => {
-    // Katılımcı Girişi
+    // Admin Giriş Kontrolü
+    socket.on('admin-login', (data) => {
+        if(data.user === 'ali' && data.pass === 'ali321') {
+            socket.emit('login-success');
+        } else {
+            socket.emit('login-fail', 'Yetkisiz Erişim!');
+        }
+    });
+
     socket.on('player-join', (nickname) => {
-        if (isGameRunning) return socket.emit('error-msg', 'Oturum devam ediyor, giriş kapalı.');
+        if (isGameRunning) return socket.emit('error-msg', 'Oturum devam ediyor.');
         players[socket.id] = { nickname, score: 0, correctCount: 0 };
         socket.emit('join-success');
         io.emit('update-player-list', Object.values(players));
     });
 
-    // Oturumu Başlat
     socket.on('start-game', () => {
         if (!isGameRunning) {
             isGameRunning = true;
@@ -40,15 +46,12 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Yanıt Gönderimi ve Hız Puanlaması
     socket.on('submit-answer', (answerIndex) => {
         if (!isGameRunning || answers[socket.id] !== undefined) return;
         const player = players[socket.id];
         if (player) {
             answers[socket.id] = answerIndex;
-            const correctIdx = questions[currentQuestionIndex].correct;
-            if (answerIndex === correctIdx) {
-                // Temel 500 + Kalan Saniye * 50 (Maks 1000 Puan)
+            if (answerIndex === questions[currentQuestionIndex].correct) {
                 const bonus = timeLeft * 50;
                 player.score += 500 + bonus;
                 player.correctCount += 1;
@@ -64,8 +67,7 @@ io.on('connection', (socket) => {
 
 function sendNextQuestion() {
     if (currentQuestionIndex >= questions.length) {
-        const finalResults = Object.values(players).sort((a, b) => b.score - a.score);
-        io.emit('game-over', finalResults);
+        io.emit('game-over', Object.values(players).sort((a, b) => b.score - a.score));
         isGameRunning = false;
         return;
     }
@@ -97,7 +99,7 @@ function endQuestionPhase() {
     Object.values(answers).forEach(ans => { if (ans >= 0) stats[ans]++; });
     const correctIdx = questions[currentQuestionIndex].correct;
 
-    // Sonuçları ve istatistikleri gönder
+    // 1. AŞAMA: İstatistikleri ve Doğru Cevabı Gönder (5 saniye)
     io.emit('question-result-data', {
         correctIndex: correctIdx,
         correctText: questions[currentQuestionIndex].options[correctIdx],
@@ -105,11 +107,12 @@ function endQuestionPhase() {
         playersAnswers: answers
     });
 
-    // 5 saniye analiz ekranı, sonra 5 saniye liderlik tablosu
+    // 2. AŞAMA: Puan Durumunu Gönder (5 saniye sonra, 5 saniye boyunca)
     setTimeout(() => {
         const sorted = Object.values(players).sort((a, b) => b.score - a.score);
         io.emit('show-leaderboard', sorted);
         
+        // 3. AŞAMA: Bir sonraki soruya geç
         setTimeout(() => {
             currentQuestionIndex++;
             sendNextQuestion();
@@ -118,4 +121,4 @@ function endQuestionPhase() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));
+server.listen(PORT, () => console.log(`Sistem ${PORT} üzerinde aktif.`));
