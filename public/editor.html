@@ -1,66 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Soru Yönetim Sistemi</title>
+    <title>Soru Editörü</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 font-sans min-h-screen">
-    <div id="login-panel" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
-        <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md">
-            <h1 class="text-2xl font-black text-center mb-6">MÜFREDAT EDİTÖRÜ</h1>
-            <input type="text" id="ed-user" placeholder="Kullanıcı Adı" class="w-full p-4 border rounded-xl mb-3">
-            <input type="password" id="ed-pass" placeholder="Şifre" class="w-full p-4 border rounded-xl mb-6">
-            <button onclick="login()" class="w-full bg-indigo-600 text-white p-4 rounded-xl font-bold">GİRİŞ YAP</button>
-        </div>
-    </div>
-
-    <div id="editor-panel" class="hidden p-8">
-        <div class="max-w-5xl mx-auto">
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-4xl font-black text-slate-800 tracking-tighter text-blue-800">SORU YÖNETİM MERKEZİ</h1>
-                <div class="space-x-4">
-                    <button onclick="addQuestion()" class="bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold">+ YENİ SORU EKLE</button>
-                    <button onclick="saveAll()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black shadow-lg">GÜNCELLE VE KAYDET</button>
-                </div>
+<body class="bg-slate-100 p-6 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-black text-blue-900 uppercase">Müfredat Düzenleme</h1>
+            <div class="space-x-2">
+                <button onclick="addQ()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold">+ Yeni Soru</button>
+                <button onclick="save()" class="bg-blue-700 text-white px-6 py-2 rounded-lg font-black shadow-lg">GÜNCELLE VE ÇIK</button>
             </div>
-            <div id="questions-list" class="space-y-6"></div>
         </div>
+        <div id="q-list" class="space-y-4"></div>
     </div>
 
     <script>
         let qData = [];
-        let auth = { user: '', pass: '' };
+        let auth = { user: 'ali', pass: 'ali321' }; // Hoca girişi için sabit şifre
 
-        async function login() {
-            auth.user = document.getElementById('ed-user').value;
-            auth.pass = document.getElementById('ed-pass').value;
-            if(auth.user === 'ali' && auth.pass === 'ali321') {
-                document.getElementById('login-panel').classList.add('hidden');
-                document.getElementById('editor-panel').classList.remove('hidden');
-                loadQuestions();
-            } else { alert("Yetkisiz Giriş!"); }
-        }
-
-        async function loadQuestions() {
-            const res = await fetch('/api/questions');
-            qData = await res.json();
+        async function load() {
+            const r = await fetch('/api/questions');
+            qData = await r.json();
             render();
         }
 
         function render() {
-            const container = document.getElementById('questions-list');
-            container.innerHTML = qData.map((q, i) => `
-                <div class="bg-white p-6 rounded-2xl shadow-md border-l-8 border-indigo-500">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="bg-slate-200 px-3 py-1 rounded-lg font-bold text-xs">SORU #${i+1}</span>
-                        <button onclick="remove(${i})" class="text-red-500 font-bold hover:underline">SİL</button>
-                    </div>
-                    <textarea onchange="updateQ(${i}, 'text', this.value)" class="w-full p-3 border rounded-xl font-bold mb-4" rows="2">${q.text}</textarea>
-                    <div class="grid grid-cols-2 gap-4">
-                        ${q.options.map((opt, oi) => `
+            document.getElementById('q-list').innerHTML = qData.map((q, i) => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-600">
+                    <div class="flex justify-between mb-4"><span class="font-black text-xs">SORU #${i+1}</span><button onclick="rem(${i})" class="text-red-500 font-bold text-xs">SİL</button></div>
+                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-3 border rounded-xl font-bold mb-4">${q.text}</textarea>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${q.options.map((o, oi) => `
                             <div class="flex items-center gap-2">
-                                <input type="radio" name="correct-${i}" ${q.correct === oi ? 'checked' : ''} onchange="updateQ(${i}, 'correct', ${oi})">
-                                <input type="text" value="${opt}" onchange="updateOpt(${i}, ${oi}, this.value)" class="w-full p-2 border rounded-lg text-sm">
+                                <input type="radio" name="c-${i}" ${q.correct===oi ? 'checked' : ''} onchange="qData[${i}].correct=${oi}">
+                                <input type="text" value="${o}" onchange="qData[${i}].options[${oi}]=this.value" class="w-full p-2 border rounded-lg text-xs">
                             </div>
                         `).join('')}
                     </div>
@@ -68,23 +43,18 @@
             `).join('');
         }
 
-        function updateQ(i, key, val) { qData[i][key] = val; }
-        function updateOpt(qi, oi, val) { qData[qi].options[oi] = val; }
-        function remove(i) { qData.splice(i, 1); render(); }
-        function addQuestion() {
-            qData.push({ text: "Yeni Soru Metni?", options: ["Şık 1", "Şık 2", "Şık 3", "Şık 4"], correct: 0 });
-            render();
-        }
+        function addQ() { qData.push({text:"Yeni?", options:["","","",""], correct:0}); render(); }
+        function rem(i) { qData.splice(i,1); render(); }
 
-        async function saveAll() {
-            const res = await fetch('/api/questions', {
+        async function save() {
+            await fetch('/api/questions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...auth, newQuestions: qData })
             });
-            const result = await res.json();
-            alert(result.message);
+            window.location.href = "admin.html"; // Kayıt sonrası ana panele döner
         }
+        load();
     </script>
 </body>
 </html>

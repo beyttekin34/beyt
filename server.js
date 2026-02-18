@@ -2,30 +2,28 @@ const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// JSON verilerini okuyabilmek için
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Başlangıç sorularını questions.js'den al
+// Başlangıç soruları
 let questions = require('./questions');
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'player.html')));
 
-// --- EDİTÖR API ---
+// API - Soruları Getir ve Kaydet
 app.get('/api/questions', (req, res) => res.json(questions));
 app.post('/api/questions', (req, res) => {
     const { user, pass, newQuestions } = req.body;
     if(user === 'ali' && pass === 'ali321') {
         questions = newQuestions;
-        res.json({ success: true, message: "Müfredat başarıyla güncellendi." });
+        res.json({ success: true });
     } else {
-        res.status(401).json({ success: false, message: "Yetkisiz erişim!" });
+        res.status(401).json({ success: false });
     }
 });
 
@@ -38,16 +36,13 @@ let timeLeft = 10;
 
 io.on('connection', (socket) => {
     socket.on('admin-login', (data) => {
-        if(data.user === 'ali' && data.pass === 'ali321') {
-            socket.emit('login-success');
-        } else {
-            socket.emit('login-fail', 'Yetkisiz Erişim!');
-        }
+        if(data.user === 'ali' && data.pass === 'ali321') socket.emit('login-success');
+        else socket.emit('login-fail');
     });
 
     socket.on('player-join', (nickname) => {
         if (isGameRunning) return socket.emit('error-msg', 'Oturum devam ediyor.');
-        players[socket.id] = { nickname, score: 0, correctCount: 0 };
+        players[socket.id] = { nickname, score: 0 };
         socket.emit('join-success');
         io.emit('update-player-list', Object.values(players));
     });
@@ -66,9 +61,7 @@ io.on('connection', (socket) => {
         if (player) {
             answers[socket.id] = answerIndex;
             if (answerIndex === questions[currentQuestionIndex].correct) {
-                const bonus = timeLeft * 50;
-                player.score += 500 + bonus;
-                player.correctCount += 1;
+                player.score += 500 + (timeLeft * 50);
             }
         }
     });
@@ -85,8 +78,7 @@ function sendNextQuestion() {
         isGameRunning = false;
         return;
     }
-    answers = {}; 
-    timeLeft = 10;
+    answers = {}; timeLeft = 10;
     io.emit('new-question', { 
         text: questions[currentQuestionIndex].text, 
         options: questions[currentQuestionIndex].options,
@@ -108,22 +100,17 @@ function sendNextQuestion() {
 function endQuestionPhase() {
     const stats = [0, 0, 0, 0];
     Object.values(answers).forEach(ans => { if (ans >= 0) stats[ans]++; });
-    const correctIdx = questions[currentQuestionIndex].correct;
     io.emit('question-result-data', {
-        correctIndex: correctIdx,
-        correctText: questions[currentQuestionIndex].options[correctIdx],
+        correctIndex: questions[currentQuestionIndex].correct,
+        correctText: questions[currentQuestionIndex].options[questions[currentQuestionIndex].correct],
         stats: stats,
         playersAnswers: answers
     });
     setTimeout(() => {
-        const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-        io.emit('show-leaderboard', sorted);
-        setTimeout(() => {
-            currentQuestionIndex++;
-            sendNextQuestion();
-        }, 5000);
+        io.emit('show-leaderboard', Object.values(players).sort((a, b) => b.score - a.score));
+        setTimeout(() => { currentQuestionIndex++; sendNextQuestion(); }, 5000);
     }, 5000); 
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sistem aktif: ${PORT}`));
+server.listen(PORT, () => console.log(`Sistem aktif.`));
