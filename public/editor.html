@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Soru Editörü</title>
+    <title>Vaka Düzenleme Paneli</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 p-6 min-h-screen font-sans">
+<body class="bg-slate-100 p-6 min-h-screen font-sans overflow-y-auto">
     <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-black text-indigo-900 tracking-tighter uppercase">Vaka Düzenleme</h1>
+        <div class="flex justify-between items-center mb-10 mt-4">
+            <h1 class="text-3xl font-black text-indigo-900 tracking-tighter uppercase">Müfredat Editörü</h1>
             <div class="space-x-2">
-                <button onclick="add()" class="bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold shadow-md">+ YENİ VAKA</button>
-                <button onclick="save()" class="bg-indigo-700 text-white px-8 py-3 rounded-xl font-black shadow-xl">GÜNCELLE VE ADMİNE DÖN</button>
+                <button onclick="addQ()" class="bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-emerald-600 transition">+ YENİ VAKA</button>
+                <button onclick="save()" class="bg-indigo-700 text-white px-8 py-3 rounded-xl font-black shadow-xl hover:bg-indigo-800 transition">KAYDET VE DÖN</button>
             </div>
         </div>
         <div id="q-list" class="space-y-6 pb-20"></div>
@@ -20,6 +20,9 @@
         let qData = [];
         let auth = { user: 'ali', pass: 'ali321' };
 
+        // Oturum Kontrolü
+        if (localStorage.getItem('admin_auth') !== 'true') { window.location.href = "admin.html"; }
+
         async function load() {
             const r = await fetch('/api/questions');
             qData = await r.json();
@@ -28,14 +31,15 @@
 
         function render() {
             document.getElementById('q-list').innerHTML = qData.map((q, i) => `
-                <div class="bg-white p-8 rounded-3xl shadow-sm border-l-8 border-indigo-600">
-                    <div class="flex justify-between mb-6 font-black text-[10px] text-indigo-400">VAKA #${i+1}<button onclick="rem(${i})" class="text-red-500 hover:underline">VAKAYI SİL</button></div>
-                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-4 border-2 rounded-2xl font-bold mb-6 text-lg outline-none focus:border-indigo-600">${q.text}</textarea>
-                    <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-indigo-600 relative">
+                    <button onclick="rem(${i})" class="absolute top-6 right-6 text-red-500 font-black text-[10px] hover:underline uppercase">Vakayı Sil</button>
+                    <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg font-black text-[10px] uppercase mb-4 inline-block">Soru #${i+1}</span>
+                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-4 border-2 rounded-2xl font-bold mb-6 text-base outline-none focus:border-indigo-600 transition" placeholder="Soru metni...">${q.text}</textarea>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         ${q.options.map((o, oi) => `
-                            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border">
-                                <input type="radio" name="c-${i}" ${q.correct===oi ? 'checked' : ''} onchange="qData[${i}].correct=${oi}" class="w-5 h-5">
-                                <input type="text" value="${o}" onchange="qData[${i}].options[${oi}]=this.value" class="w-full p-2 text-sm font-bold bg-transparent outline-none border-b focus:border-indigo-500">
+                            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                <input type="radio" name="c-${i}" ${q.correct===oi ? 'checked' : ''} onchange="qData[${i}].correct=${oi}" class="w-5 h-5 accent-indigo-600">
+                                <input type="text" value="${o}" onchange="qData[${i}].options[${oi}]=this.value" class="w-full p-2 text-xs font-bold bg-transparent border-b border-slate-300 outline-none focus:border-indigo-500">
                             </div>
                         `).join('')}
                     </div>
@@ -43,8 +47,8 @@
             `).join('');
         }
 
-        function add() { qData.push({text:"Yeni?", options:["","","",""], correct:0}); render(); }
-        function rem(i) { qData.splice(i,1); render(); }
+        function addQ() { qData.push({text:"Yeni Vaka Sorusu?", options:["A Şıkkı","B Şıkkı","C Şıkkı","D Şıkkı"], correct:0}); render(); }
+        function rem(i) { if(confirm('Bu vakayı silmek istediğinize emin misiniz?')) { qData.splice(i,1); render(); } }
 
         async function save() {
             const res = await fetch('/api/questions', {
@@ -53,10 +57,7 @@
                 body: JSON.stringify({ ...auth, newQuestions: qData })
             });
             const data = await res.json();
-            if(data.success) {
-                alert("Sorular Başarıyla Güncellendi!");
-                window.location.href = "admin.html";
-            }
+            if(data.success) { alert("Müfredat güncellendi!"); window.location.href = "admin.html"; }
         }
         load();
     </script>

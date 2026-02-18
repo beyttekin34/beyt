@@ -2,130 +2,92 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Katılımcı Paneli</title>
+    <title>Katılımcı Ekranı</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .selected { outline: 6px solid white; transform: scale(1.05); z-index: 50; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .dimmed { opacity: 0.1; }
-        .mobile-height { min-height: calc(100vh - 60px); }
+        .dimmed { opacity: 0.05; }
+        .grid-item { min-height: 120px; }
     </style>
 </head>
-<body class="bg-slate-950 text-white font-sans overflow-y-auto selection:bg-indigo-500">
+<body class="bg-slate-950 text-white font-sans min-h-screen overflow-y-auto pb-10">
 
     <div id="bar" class="hidden sticky top-0 bg-indigo-900 p-3 flex justify-between items-center shadow-2xl z-40">
-        <div class="flex flex-col"><span id="p-name" class="font-black text-xs truncate max-w-[100px] uppercase"></span><span id="q-idx" class="text-[10px] opacity-60 font-bold">VAKA: 0/0</span></div>
-        <div class="bg-black/30 px-4 py-1 rounded-full font-black text-xs text-indigo-300">SÜRE: <span id="p-timer">10</span></div>
+        <div class="flex flex-col"><span id="p-name" class="font-black text-[10px] truncate max-w-[100px] uppercase"></span><span id="q-idx" class="text-[8px] opacity-60 font-bold">VAKA: 0/0</span></div>
+        <div class="bg-black/30 px-3 py-1 rounded-full font-black text-[10px] text-indigo-300">SÜRE: <span id="p-timer">10</span></div>
     </div>
 
-    <div id="login-screen" class="mobile-height flex flex-col items-center justify-center p-8 space-y-6">
-        <h1 class="text-4xl font-black text-indigo-400 text-center tracking-tighter uppercase leading-none">KLİNİK OTURUM</h1>
-        <input type="text" id="nick" placeholder="AD SOYAD" class="w-full p-5 text-center bg-white/5 border-4 border-white/10 rounded-3xl outline-none focus:border-indigo-600 font-black uppercase text-xl">
-        <button onclick="join()" class="w-full bg-indigo-700 text-white py-5 rounded-3xl text-2xl font-black shadow-2xl active:scale-95 transition-all">KATIL</button>
+    <div id="login-screen" class="min-h-screen flex flex-col items-center justify-center p-8 space-y-6">
+        <h1 class="text-3xl font-black text-indigo-400 text-center tracking-tighter uppercase leading-none">Veteriner<br>Klinik Oturum</h1>
+        <input type="text" id="nick" placeholder="ADINIZ SOYADINIZ" class="w-full p-4 text-center bg-white/5 border-2 border-white/10 rounded-2xl outline-none focus:border-indigo-600 font-black uppercase text-lg">
+        <button onclick="join()" class="w-full bg-indigo-700 py-4 rounded-2xl text-xl font-black shadow-2xl active:scale-95 transition-all">OTURUMA KATIL</button>
     </div>
 
-    <div id="waiting-screen" class="hidden mobile-height flex flex-col items-center justify-center p-10 text-center">
+    <div id="waiting-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-10 text-center">
         <div class="animate-pulse space-y-4">
-            <h2 class="text-3xl font-black text-indigo-400">HAZIR</h2>
-            <p class="text-sm opacity-50 font-bold italic">Vaka verileri sunuluyor...</p>
+            <h2 class="text-3xl font-black text-indigo-400 uppercase">Hazır Olun</h2>
+            <p class="text-xs opacity-50 font-bold italic">Vaka analizi başlatılması bekleniyor...</p>
         </div>
     </div>
 
-    <div id="game" class="hidden p-4 space-y-4">
-        <div class="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-xl">
-            <h2 id="q-text" class="text-lg font-black text-center leading-relaxed"></h2>
+    <div id="game" class="hidden p-4 space-y-4 mt-4">
+        <div class="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-xl">
+            <h2 id="q-text" class="text-sm font-black text-center leading-relaxed"></h2>
         </div>
-        <div class="grid grid-cols-2 gap-3 pb-8">
-            <button onclick="ans(0)" id="b-0" class="bg-rose-500 min-h-[140px] rounded-3xl font-black text-sm flex flex-col items-center justify-center p-4 transition-all duration-300 relative shadow-xl">
-                <span class="absolute top-3 left-4 bg-black/20 px-2 py-0.5 rounded text-[10px]">A</span>
-                <span class="t text-center"></span>
+        <div class="grid grid-cols-2 gap-2 pb-10">
+            <button onclick="ans(0)" id="b-0" class="bg-rose-500 grid-item rounded-2xl font-black text-[10px] flex flex-col items-center justify-center p-3 relative shadow-lg">
+                <span class="absolute top-2 left-3 bg-black/20 px-1.5 py-0.5 rounded text-[8px]">A</span><span class="t text-center"></span>
             </button>
-            <button onclick="ans(1)" id="b-1" class="bg-sky-500 min-h-[140px] rounded-3xl font-black text-sm flex flex-col items-center justify-center p-4 transition-all duration-300 relative shadow-xl">
-                <span class="absolute top-3 left-4 bg-black/20 px-2 py-0.5 rounded text-[10px]">B</span>
-                <span class="t text-center"></span>
+            <button onclick="ans(1)" id="b-1" class="bg-sky-500 grid-item rounded-2xl font-black text-[10px] flex flex-col items-center justify-center p-3 relative shadow-lg">
+                <span class="absolute top-2 left-3 bg-black/20 px-1.5 py-0.5 rounded text-[8px]">B</span><span class="t text-center"></span>
             </button>
-            <button onclick="ans(2)" id="b-2" class="bg-amber-500 min-h-[140px] rounded-3xl font-black text-sm flex flex-col items-center justify-center p-4 transition-all duration-300 relative shadow-xl">
-                <span class="absolute top-3 left-4 bg-black/20 px-2 py-0.5 rounded text-[10px]">C</span>
-                <span class="t text-center"></span>
+            <button onclick="ans(2)" id="b-2" class="bg-amber-500 grid-item rounded-2xl font-black text-[10px] flex flex-col items-center justify-center p-3 relative shadow-lg">
+                <span class="absolute top-2 left-3 bg-black/20 px-1.5 py-0.5 rounded text-[8px]">C</span><span class="t text-center"></span>
             </button>
-            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 min-h-[140px] rounded-3xl font-black text-sm flex flex-col items-center justify-center p-4 transition-all duration-300 relative shadow-xl">
-                <span class="absolute top-3 left-4 bg-black/20 px-2 py-0.5 rounded text-[10px]">D</span>
-                <span class="t text-center"></span>
+            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 grid-item rounded-2xl font-black text-[10px] flex flex-col items-center justify-center p-3 relative shadow-lg">
+                <span class="absolute top-2 left-3 bg-black/20 px-1.5 py-0.5 rounded text-[8px]">D</span><span class="t text-center"></span>
             </button>
         </div>
     </div>
 
-    <div id="stats" class="hidden mobile-height p-6 flex flex-col">
-        <h2 id="res" class="text-4xl font-black text-center mb-6"></h2>
-        <div class="bg-indigo-600/20 p-5 rounded-3xl mb-8 border-l-8 border-indigo-600">
-            <p class="text-[10px] font-black text-indigo-400 uppercase mb-1">DOĞRU YANIT:</p>
-            <p id="cor" class="text-base font-black text-indigo-50"></p>
+    <div id="stats" class="hidden p-6 flex flex-col min-h-screen">
+        <h2 id="res" class="text-3xl font-black text-center mb-6"></h2>
+        <div class="bg-indigo-600/20 p-4 rounded-2xl mb-8 border-l-8 border-indigo-600">
+            <p class="text-[8px] font-black text-indigo-400 uppercase mb-1">Doğru Yaklaşım:</p>
+            <p id="cor" class="text-xs font-black"></p>
         </div>
-        <div id="graph" class="space-y-4 flex-grow"></div>
+        <div id="graph" class="space-y-4"></div>
     </div>
 
-    <div id="lb" class="hidden mobile-height p-6 flex flex-col">
-        <h2 id="lb-title" class="text-2xl font-black text-center text-indigo-400 mb-8 uppercase">GÜNCEL DURUM</h2>
-        <div id="lb-list" class="space-y-3 flex-grow"></div>
+    <div id="lb" class="hidden p-6 flex flex-col min-h-screen">
+        <h2 id="lb-title" class="text-xl font-black text-center text-indigo-400 mb-8 uppercase tracking-widest">Sıralama</h2>
+        <div id="lb-list" class="space-y-2"></div>
     </div>
 
     <script>
         const socket = io(); let me = "";
         function join() { me = document.getElementById('nick').value.trim(); if(!me) return; socket.emit('player-join', me); document.getElementById('p-name').innerText = me; }
         socket.on('join-success', () => { show('waiting-screen'); document.getElementById('bar').classList.remove('hidden'); window.scrollTo(0,0); });
-        
         socket.on('new-question', (d) => {
             show('game'); window.scrollTo(0,0);
-            document.getElementById('q-idx').innerText = `VAKA: ${d.qIndex}/${d.total}`; 
-            document.getElementById('q-text').innerText = d.text; 
-            document.getElementById('p-timer').innerText = d.time;
-            for(let i=0; i<4; i++){ 
-                const b=document.getElementById(`b-${i}`); 
-                b.classList.remove('selected','dimmed'); 
-                b.querySelector('.t').innerText=d.options[i]; 
-                b.disabled = false; 
-            }
+            document.getElementById('q-idx').innerText = `VAKA: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; document.getElementById('p-timer').innerText = d.time;
+            for(let i=0; i<4; i++){ const b=document.getElementById(`b-${i}`); b.classList.remove('selected','dimmed'); b.querySelector('.t').innerText=d.options[i]; b.disabled = false; }
         });
-
         socket.on('timer-tick', (t) => document.getElementById('p-timer').innerText = t);
-        
-        function ans(i) { 
-            socket.emit('submit-answer', i); 
-            for(let j=0; j<4; j++){ 
-                const b=document.getElementById(`b-${j}`); 
-                b.disabled=true; 
-                if(i===j) b.classList.add('selected'); else b.classList.add('dimmed'); 
-            } 
-        }
-
+        function ans(i) { socket.emit('submit-answer', i); for(let j=0; j<4; j++){ const b=document.getElementById(`b-${j}`); b.disabled=true; if(i===j) b.classList.add('selected'); else b.classList.add('dimmed'); } }
         socket.on('question-result-data', (d) => {
             show('stats'); const myA = d.playersAnswers[socket.id];
             document.getElementById('res').innerText = (myA === d.correctIndex) ? "DOĞRU ✅" : "HATALI ❌";
-            document.getElementById('res').className = `text-4xl font-black text-center mb-6 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
+            document.getElementById('res').className = `text-3xl font-black text-center mb-6 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
             document.getElementById('cor').innerText = d.correctText;
             const g = document.getElementById('graph'); g.innerHTML = '';
-            const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
             const max = Math.max(...d.stats) || 1;
-            d.stats.forEach((c, i) => { 
-                const w = (c/max)*100; 
-                g.innerHTML += `<div class="flex items-center gap-3"><div class="text-xs w-4 font-black">${['A','B','C','D'][i]}</div><div class="flex-grow h-3 bg-white/10 rounded-full overflow-hidden"><div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div></div><div class="text-xs w-4 text-right font-black">${c}</div></div>`; 
-            });
+            const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
+            d.stats.forEach((c, i) => { const w = (c/max)*100; g.innerHTML += `<div class="flex items-center gap-2"><div class="text-[10px] w-3 font-black">${['A','B','C','D'][i]}</div><div class="flex-grow h-3 bg-white/10 rounded-full overflow-hidden"><div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div></div><div class="text-[10px] w-3 text-right font-black">${c}</div></div>`; });
         });
-
-        socket.on('show-leaderboard', (list) => {
-            show('lb');
-            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-700 ring-2 ring-white' : 'bg-white/5'} p-4 rounded-2xl"><span class="text-xs font-black uppercase">#${i+1} ${p.nickname}</span><span class="text-xs font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join('');
-        });
-
-        socket.on('game-over', (list) => {
-            show('lb');
-            document.getElementById('lb-title').innerText = "OYUN SONA ERDİ";
-            const myFinal = list.find(p => p.nickname === me);
-            if(myFinal) {
-                document.getElementById('lb-list').innerHTML = `<div class="bg-indigo-600 p-8 rounded-3xl text-center mb-6 shadow-2xl"><h3 class="text-lg opacity-70 mb-2">TOPLAM PUANIN</h3><div class="text-5xl font-black">${Math.floor(myFinal.score)}</div><p class="mt-4 font-bold">Klinik başarınız kaydedildi.</p></div>` + document.getElementById('lb-list').innerHTML;
-            }
-        });
-
+        socket.on('show-leaderboard', (list) => { show('lb'); document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-700 ring-2 ring-white' : 'bg-white/5'} p-3 rounded-xl"><span class="text-[10px] font-black uppercase">#${i+1} ${p.nickname}</span><span class="text-[10px] font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join(''); });
+        socket.on('game-over', (list) => { show('lb'); document.getElementById('lb-title').innerText = "OTURUM SONA ERDİ"; const myFinal = list.find(p => p.nickname === me); if(myFinal) { document.getElementById('lb-list').innerHTML = `<div class="bg-indigo-600 p-6 rounded-3xl text-center mb-6"><h3 class="text-xs opacity-70 mb-2 uppercase">Toplam Puanın</h3><div class="text-5xl font-black">${Math.floor(myFinal.score)}</div></div>` + document.getElementById('lb-list').innerHTML; } });
         function show(id) { ['login-screen','waiting-screen','game','stats','lb'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
 </body>

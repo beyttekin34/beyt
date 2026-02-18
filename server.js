@@ -60,11 +60,8 @@ io.on('connection', (socket) => {
         if (player) {
             answers[socket.id] = answerIndex;
             if (answerIndex === questions[currentQuestionIndex].correct) {
-                // Küsüratlı Puanlama Sistemi
-                const base = 500;
-                const speedBonus = timeLeft * 37;
-                const randomExtra = Math.floor(Math.random() * 38) + 11; 
-                player.score += base + speedBonus + randomExtra;
+                const bonus = (timeLeft * 37) + (Math.floor(Math.random() * 41) + 12);
+                player.score += 500 + bonus;
                 player.correctAnswers += 1;
             }
         }
@@ -83,7 +80,6 @@ function sendNextQuestion() {
         isGameRunning = false;
         return;
     }
-
     answers = {}; 
     timeLeft = 10;
     io.emit('new-question', { 
@@ -93,7 +89,6 @@ function sendNextQuestion() {
         total: questions.length,
         time: timeLeft
     });
-
     if(timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;
@@ -115,7 +110,6 @@ function endQuestionPhase() {
         stats: stats,
         playersAnswers: answers
     });
-
     setTimeout(() => {
         io.emit('show-leaderboard', Object.values(players).sort((a, b) => b.score - a.score));
         setTimeout(() => {
@@ -126,4 +120,4 @@ function endQuestionPhase() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Oturum Sistemi Aktif.`));
+server.listen(PORT, () => console.log(`Sunucu aktif.`));
