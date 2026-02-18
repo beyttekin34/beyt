@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Klinik Oturum Yönetimi</title>
+    <title>Sınav Yönetim Paneli</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white font-sans min-h-screen overflow-y-auto">
 
     <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6 hidden">
         <div class="bg-white/5 p-10 rounded-3xl border border-white/10 w-full max-w-md text-center backdrop-blur-md">
-            <h2 class="text-3xl font-black mb-8 text-indigo-400 uppercase">Yönetici Girişi</h2>
+            <h2 class="text-3xl font-black mb-8 text-indigo-400 uppercase italic">Hoca Girişi</h2>
             <input type="text" id="u" placeholder="Kullanıcı Adı" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 mb-4 outline-none">
             <input type="password" id="p" placeholder="Şifre" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 mb-8 outline-none">
             <button onclick="login()" class="w-full bg-indigo-600 p-4 rounded-xl font-black shadow-lg">OTURUMU AÇ</button>
@@ -17,43 +18,51 @@
     </div>
 
     <div id="dashboard" class="hidden min-h-screen flex flex-col items-center justify-center space-y-12 p-8 text-center">
-        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase">Vaka Analiz Sistemi</h1>
+        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase italic">SORU YÖNETİM MERKEZİ</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-3xl font-black hover:scale-105 transition-all shadow-2xl">LOBİYE GİT</button>
-            <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-3xl font-black text-center hover:scale-105 transition-all shadow-2xl flex items-center justify-center">VAKA DÜZENLE</a>
+            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-3xl font-black hover:scale-105 transition-all shadow-2xl">YARIŞMA LOBİSİ</button>
+            <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-3xl font-black text-center hover:scale-105 transition-all shadow-2xl flex items-center justify-center uppercase">Soruları Düzenle</a>
         </div>
     </div>
 
     <div id="lobby" class="hidden min-h-screen flex flex-col items-center justify-center p-10">
-        <h2 class="text-4xl font-black mb-10 text-indigo-300">BAĞLI KATILIMCILAR: <span id="count">0</span></h2>
-        <div id="list" class="flex flex-wrap justify-center gap-4 mb-16"></div>
+        <h2 class="text-4xl font-black mb-6 text-indigo-300 uppercase italic">Kayıtlı Öğrenciler: <span id="count">0</span></h2>
+        
+        <div class="bg-white p-4 rounded-3xl shadow-2xl mb-10 flex flex-col items-center animate-fade-in">
+            <div id="qrcode" class="mb-2"></div>
+            <p class="text-indigo-900 font-black text-sm uppercase">Katılmak İçin Okutun</p>
+        </div>
+        
+        <div id="list" class="flex flex-wrap justify-center gap-4 mb-16 w-full max-w-4xl"></div>
         <div class="flex gap-6">
-            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-16 py-6 rounded-full text-4xl font-black shadow-2xl">OTURUMU BAŞLAT</button>
-            <button onclick="show('dashboard')" class="bg-slate-700 px-8 py-6 rounded-full text-xl font-bold">GERİ</button>
+            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-16 py-6 rounded-full text-4xl font-black shadow-2xl hover:bg-indigo-500 transition-all">YARIŞMAYI BAŞLAT</button>
+            <button onclick="show('dashboard')" class="bg-slate-700 px-8 py-6 rounded-full text-xl font-bold hover:bg-slate-600 transition-all">GERİ DÖN</button>
         </div>
     </div>
 
     <div id="game" class="hidden p-6 flex flex-col items-center">
         <div class="flex justify-between w-full max-w-6xl mb-12 mt-10">
-            <div class="text-3xl font-black text-indigo-400">VAKA: <span id="q-idx">0/0</span></div>
+            <div class="text-3xl font-black text-indigo-400">MEVCUT: <span id="q-idx">0/0</span></div>
             <div class="w-20 h-20 rounded-full border-4 border-indigo-500 flex items-center justify-center text-3xl font-black animate-pulse">
                 <span id="timer">10</span>
             </div>
         </div>
-        <h2 id="q-text" class="text-4xl font-black text-center mb-12 max-w-5xl leading-tight"></h2>
+        <h2 id="q-text" class="text-4xl font-black text-center mb-12 max-w-5xl leading-tight text-white italic"></h2>
         <div id="options" class="grid grid-cols-2 gap-6 w-full max-w-6xl"></div>
-        <div id="stats" class="hidden w-full max-w-4xl mt-12 bg-white/5 p-8 rounded-3xl border border-white/10">
+        <div id="stats" class="hidden w-full max-w-4xl mt-12 bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6 text-center text-indigo-300">ÖĞRENCİ YANIT DAĞILIMI</h3>
             <div id="graph" class="space-y-4"></div>
         </div>
     </div>
 
     <div id="leaderboard" class="hidden min-h-screen flex flex-col items-center justify-center p-10">
-        <h1 id="lb-title" class="text-6xl font-black mb-16 text-indigo-400 uppercase tracking-tighter">Sıralama</h1>
+        <h1 id="lb-title" class="text-6xl font-black mb-16 text-indigo-400 uppercase tracking-tighter italic">Başarı Sıralaması</h1>
         <div id="lb-list" class="w-full max-w-4xl space-y-4"></div>
     </div>
 
     <script>
         const socket = io();
+        // Oturum Kontrolü
         if (localStorage.getItem('admin_auth') === 'true') { show('dashboard'); } 
         else { document.getElementById('login-screen').classList.remove('hidden'); }
 
@@ -63,14 +72,32 @@
             else { alert("Hatalı Giriş!"); }
         }
 
-        function showLobby() { show('lobby'); }
-        socket.on('update-player-list', (p) => { document.getElementById('count').innerText = p.length; document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600 px-6 py-2 rounded-full font-bold border border-indigo-400 shadow-xl">${x.nickname}</div>`).join(''); });
+        // QR KOD OLUŞTURMA FONKSİYONU
+        let qrGenerated = false;
+        function showLobby() { 
+            show('lobby');
+            if (!qrGenerated) {
+                // Sitenin ana adresini al (örn: https://ic-hastaliklari-quiz.onrender.com)
+                const joinLink = window.location.origin;
+                new QRCode(document.getElementById("qrcode"), {
+                    text: joinLink,
+                    width: 180,
+                    height: 180,
+                    colorDark : "#312e81", // Koyu indigo rengi
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+                qrGenerated = true;
+            }
+        }
+
+        socket.on('update-player-list', (p) => { document.getElementById('count').innerText = p.length; document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600 px-6 py-2 rounded-full font-bold border border-indigo-400 shadow-xl animate-fade-in">${x.nickname}</div>`).join(''); });
 
         socket.on('new-question', (d) => {
             show('game'); document.getElementById('stats').classList.add('hidden');
             document.getElementById('q-idx').innerText = `${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; document.getElementById('timer').innerText = d.time;
             const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
-            document.getElementById('options').innerHTML = d.options.map((o, i) => `<div id="opt-${i}" class="${colors[i]} p-8 rounded-2xl text-xl font-black shadow-lg flex items-center transition-all"><span class="bg-black/20 w-10 h-10 flex items-center justify-center rounded-xl mr-5 text-sm">${['A','B','C','D'][i]}</span>${o}</div>`).join('');
+            document.getElementById('options').innerHTML = d.options.map((o, i) => `<div id="opt-${i}" class="${colors[i]} p-8 rounded-2xl text-xl font-black shadow-lg flex items-center transition-all"><span class="bg-black/20 w-10 h-10 flex items-center justify-center rounded-xl mr-5 text-sm font-black">${['A','B','C','D'][i]}</span>${o}</div>`).join('');
         });
 
         socket.on('timer-tick', (t) => document.getElementById('timer').innerText = t);
@@ -84,7 +111,7 @@
         });
 
         socket.on('show-leaderboard', (list) => { show('leaderboard'); document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="bg-white/5 p-6 rounded-3xl border-l-8 border-indigo-500 flex justify-between animate-fade-in"><span class="text-3xl font-black">#${i+1} ${p.nickname}</span><span class="text-3xl font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join(''); });
-        socket.on('game-over', (list) => { show('leaderboard'); document.getElementById('lb-title').innerText = "OTURUM SONA ERDİ"; document.getElementById('lb-list').innerHTML += `<button onclick="location.reload()" class="mt-12 bg-indigo-600 px-10 py-4 rounded-xl font-black text-xl">YENİ BAŞLAT</button>`; });
+        socket.on('game-over', (list) => { show('leaderboard'); document.getElementById('lb-title').innerText = "YARIŞMA SONU"; document.getElementById('lb-list').innerHTML += `<button onclick="location.reload()" class="mt-12 bg-indigo-600 px-10 py-4 rounded-xl font-black text-xl shadow-2xl hover:bg-indigo-500 transition-all">YENİ OTURUM</button>`; });
 
         function show(id) { ['dashboard','lobby','game','leaderboard'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
