@@ -10,14 +10,11 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Başlangıç sorularını yükle
 let questions = require('./questions');
 
-// Rotalar
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'player.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
-// Editör API
 app.get('/api/questions', (req, res) => res.json(questions));
 app.post('/api/questions', (req, res) => {
     const { user, pass, newQuestions } = req.body;
@@ -44,7 +41,7 @@ io.on('connection', (socket) => {
 
     socket.on('player-join', (nickname) => {
         if (isGameRunning) return socket.emit('error-msg', 'Oturum devam ediyor.');
-        players[socket.id] = { nickname, score: 0 };
+        players[socket.id] = { nickname, score: 0, correctAnswers: 0 };
         socket.emit('join-success');
         io.emit('update-player-list', Object.values(players));
     });
@@ -63,8 +60,12 @@ io.on('connection', (socket) => {
         if (player) {
             answers[socket.id] = answerIndex;
             if (answerIndex === questions[currentQuestionIndex].correct) {
-                // Hız bonusu: Temel 500 + (Saniye x 50)
-                player.score += 500 + (timeLeft * 50);
+                // Küsüratlı Puanlama Sistemi
+                const base = 500;
+                const speedBonus = timeLeft * 37;
+                const randomExtra = Math.floor(Math.random() * 38) + 11; 
+                player.score += base + speedBonus + randomExtra;
+                player.correctAnswers += 1;
             }
         }
     });
@@ -77,15 +78,14 @@ io.on('connection', (socket) => {
 
 function sendNextQuestion() {
     if (currentQuestionIndex >= questions.length) {
-        const finalResults = Object.values(players).sort((a, b) => b.score - a.score);
-        io.emit('game-over', finalResults);
+        const results = Object.values(players).sort((a, b) => b.score - a.score);
+        io.emit('game-over', results);
         isGameRunning = false;
         return;
     }
 
     answers = {}; 
     timeLeft = 10;
-    
     io.emit('new-question', { 
         text: questions[currentQuestionIndex].text, 
         options: questions[currentQuestionIndex].options,
@@ -109,7 +109,6 @@ function sendNextQuestion() {
 function endQuestionPhase() {
     const stats = [0, 0, 0, 0];
     Object.values(answers).forEach(ans => { if (ans >= 0) stats[ans]++; });
-    
     io.emit('question-result-data', {
         correctIndex: questions[currentQuestionIndex].correct,
         correctText: questions[currentQuestionIndex].options[questions[currentQuestionIndex].correct],
@@ -117,12 +116,8 @@ function endQuestionPhase() {
         playersAnswers: answers
     });
 
-    // 5 Saniye Analiz
     setTimeout(() => {
-        const sorted = Object.values(players).sort((a, b) => b.score - a.score);
-        io.emit('show-leaderboard', sorted);
-        
-        // 5 Saniye Liderlik Tablosu, sonra Yeni Soru
+        io.emit('show-leaderboard', Object.values(players).sort((a, b) => b.score - a.score));
         setTimeout(() => {
             currentQuestionIndex++;
             sendNextQuestion();
@@ -131,4 +126,4 @@ function endQuestionPhase() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sistem aktif.`));
+server.listen(PORT, () => console.log(`Oturum Sistemi Aktif.`));

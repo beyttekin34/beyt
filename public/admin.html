@@ -1,70 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Klinik Oturum Yönetimi</title>
+    <title>Admin Yönetim Paneli</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-white font-sans h-screen flex flex-col overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6">
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6 hidden">
         <div class="bg-white/5 p-10 rounded-3xl border border-white/10 w-full max-w-md text-center backdrop-blur-md">
-            <h2 class="text-3xl font-black mb-8 text-indigo-400">ADMIN GİRİŞİ</h2>
+            <h2 class="text-3xl font-black mb-8 text-indigo-400">YÖNETİCİ GİRİŞİ</h2>
             <input type="text" id="u" placeholder="Kullanıcı Adı" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 mb-4 outline-none">
             <input type="password" id="p" placeholder="Şifre" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 mb-8 outline-none">
-            <button onclick="login()" class="w-full bg-indigo-600 p-4 rounded-xl font-black">SİSTEMİ AÇ</button>
+            <button onclick="login()" class="w-full bg-indigo-600 p-4 rounded-xl font-black shadow-lg">SİSTEME GİRİŞ YAP</button>
         </div>
     </div>
 
-    <div id="dashboard" class="hidden flex-grow flex flex-col items-center justify-center space-y-10 p-10">
-        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase">Klinik Değerlendirme</h1>
+    <div id="dashboard" class="hidden flex-grow flex flex-col items-center justify-center space-y-12">
+        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase">Vaka Analiz Merkezi</h1>
         <div class="grid grid-cols-2 gap-8 w-full max-w-4xl">
-            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-4xl font-black hover:scale-105 transition shadow-2xl">OYUNU BAŞLAT</button>
-            <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-4xl font-black text-center hover:scale-105 transition shadow-2xl flex items-center justify-center">SORULARI DÜZENLE</a>
+            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-3xl font-black hover:scale-105 transition-all shadow-2xl">LOBİYE GİT</button>
+            <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-3xl font-black text-center hover:scale-105 transition-all shadow-2xl flex items-center justify-center">SORULARI DÜZENLE</a>
         </div>
     </div>
 
     <div id="lobby" class="hidden flex-grow flex flex-col items-center justify-center p-10">
-        <h2 class="text-4xl font-black mb-10 text-indigo-300">KAYITLI KATILIMCILAR: <span id="count">0</span></h2>
+        <h2 class="text-4xl font-black mb-10 text-indigo-300">KATILIMCILAR: <span id="count">0</span></h2>
         <div id="list" class="flex flex-wrap justify-center gap-4 mb-16"></div>
         <div class="flex gap-6">
-            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-20 py-8 rounded-full text-4xl font-black shadow-lg">BAŞLAT</button>
-            <button onclick="show('dashboard')" class="bg-slate-700 px-10 py-8 rounded-full text-xl font-bold">GERİ</button>
+            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-20 py-8 rounded-full text-4xl font-black shadow-2xl">OTURUMU BAŞLAT</button>
+            <button onclick="show('dashboard')" class="bg-slate-700 px-10 py-8 rounded-full text-xl font-bold">GERİ DÖN</button>
         </div>
     </div>
 
     <div id="game" class="hidden flex-grow flex flex-col items-center justify-center p-10">
         <div class="flex justify-between w-full max-w-6xl mb-12">
             <div class="text-4xl font-black text-indigo-400 uppercase">SORU: <span id="q-idx">0/0</span></div>
-            <div id="timer-box" class="w-24 h-24 rounded-full border-8 border-indigo-500 flex items-center justify-center text-5xl font-black animate-pulse">
+            <div class="w-24 h-24 rounded-full border-8 border-indigo-500 flex items-center justify-center text-5xl font-black animate-pulse">
                 <span id="timer">10</span>
             </div>
         </div>
         <h2 id="q-text" class="text-5xl font-black text-center mb-16 max-w-5xl leading-tight"></h2>
         <div id="options" class="grid grid-cols-2 gap-6 w-full max-w-6xl"></div>
-        
         <div id="stats" class="hidden w-full max-w-4xl mt-12 bg-white/5 p-8 rounded-3xl border border-white/10">
-            <h3 class="text-2xl font-bold mb-6 text-center text-indigo-300">KATILIMCI YANITLARI</h3>
             <div id="graph" class="space-y-4"></div>
         </div>
     </div>
 
-    <div id="leaderboard" class="hidden flex-grow flex flex-col items-center justify-center p-10 text-center">
-        <h1 class="text-7xl font-black mb-16 text-indigo-400">BAŞARI SIRALAMASI</h1>
+    <div id="leaderboard" class="hidden flex-grow flex flex-col items-center justify-center p-10">
+        <h1 id="lb-title" class="text-7xl font-black mb-16 text-indigo-400">SIRALAMA</h1>
         <div id="lb-list" class="w-full max-w-4xl space-y-4"></div>
     </div>
 
     <script>
         const socket = io();
-        function login() { socket.emit('admin-login', {user: document.getElementById('u').value, pass: document.getElementById('p').value}); }
-        socket.on('login-success', () => { document.getElementById('login-screen').classList.add('hidden'); show('dashboard'); });
-        socket.on('login-fail', () => alert("Hatalı Giriş!"));
+        
+        // Oturum Kontrolü
+        if (localStorage.getItem('admin_auth') === 'true') {
+            show('dashboard');
+        } else {
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        function login() {
+            const u = document.getElementById('u').value;
+            const p = document.getElementById('p').value;
+            if(u === 'ali' && p === 'ali321') {
+                localStorage.setItem('admin_auth', 'true');
+                document.getElementById('login-screen').classList.add('hidden');
+                show('dashboard');
+            } else { alert("Hatalı Giriş!"); }
+        }
 
         function showLobby() { show('lobby'); }
 
         socket.on('update-player-list', (p) => {
             document.getElementById('count').innerText = p.length;
-            document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600 px-6 py-2 rounded-full font-bold border border-indigo-400 shadow-xl">${x.nickname}</div>`).join('');
+            document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600 px-6 py-2 rounded-full font-bold border border-indigo-400">${x.nickname}</div>`).join('');
         });
 
         socket.on('new-question', (d) => {
@@ -74,12 +86,7 @@
             document.getElementById('q-text').innerText = d.text;
             document.getElementById('timer').innerText = d.time;
             const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
-            document.getElementById('options').innerHTML = d.options.map((o, i) => `
-                <div id="opt-${i}" class="${colors[i]} p-8 rounded-2xl text-2xl font-black flex items-center shadow-lg transition-all duration-300">
-                    <span class="bg-black/20 w-12 h-12 flex items-center justify-center rounded-xl mr-6 text-sm">${['A','B','C','D'][i]}</span>
-                    ${o}
-                </div>
-            `).join('');
+            document.getElementById('options').innerHTML = d.options.map((o, i) => `<div id="opt-${i}" class="${colors[i]} p-8 rounded-2xl text-2xl font-black shadow-lg flex items-center transition-all"><span class="bg-black/20 w-12 h-12 flex items-center justify-center rounded-xl mr-6 text-sm font-black">${['A','B','C','D'][i]}</span>${o}</div>`).join('');
         });
 
         socket.on('timer-tick', (t) => document.getElementById('timer').innerText = t);
@@ -89,26 +96,29 @@
             for(let i=0; i<4; i++) {
                 const el = document.getElementById(`opt-${i}`);
                 if(i === d.correctIndex) el.classList.add('ring-8', 'ring-white', 'scale-105');
-                else el.classList.add('opacity-10', 'scale-90');
+                else el.classList.add('opacity-10');
             }
             const g = document.getElementById('graph'); g.innerHTML = '';
             const max = Math.max(...d.stats) || 1;
             const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
             d.stats.forEach((c, i) => {
                 const w = (c/max)*100;
-                g.innerHTML += `<div class="flex items-center gap-4"><div class="w-8 font-black text-xl">${['A','B','C','D'][i]}</div><div class="flex-grow h-6 bg-white/10 rounded-full overflow-hidden"><div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div></div><div class="w-8 text-right font-black text-xl">${c}</div></div>`;
+                g.innerHTML += `<div class="flex items-center gap-4"><div class="w-8 font-black text-xl">${['A','B','C','D'][i]}</div><div class="flex-grow h-6 bg-white/10 rounded-full"><div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div></div><div class="w-8 text-right font-black text-xl">${c}</div></div>`;
             });
         });
 
         socket.on('show-leaderboard', (list) => {
             show('leaderboard');
-            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="bg-white/5 p-8 rounded-3xl border-l-8 border-indigo-500 flex justify-between"><span class="text-4xl font-black">#${i+1} ${p.nickname}</span><span class="text-4xl font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join('');
+            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="bg-white/5 p-8 rounded-3xl border-l-8 border-indigo-500 flex justify-between animate-fade-in"><span class="text-4xl font-black">#${i+1} ${p.nickname}</span><span class="text-4xl font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join('');
         });
 
-        function show(id) { 
-            ['dashboard','lobby','game','leaderboard'].forEach(x => document.getElementById(x).classList.add('hidden')); 
-            document.getElementById(id).classList.remove('hidden'); 
-        }
+        socket.on('game-over', (list) => {
+            show('leaderboard');
+            document.getElementById('lb-title').innerText = "OTURUM SONA ERDİ";
+            document.getElementById('lb-list').innerHTML += `<button onclick="location.reload()" class="mt-12 bg-indigo-600 px-10 py-4 rounded-xl font-black text-xl">YENİ OTURUM</button>`;
+        });
+
+        function show(id) { ['dashboard','lobby','game','leaderboard'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
 </body>
 </html>
