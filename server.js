@@ -10,12 +10,14 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Başlangıç soruları
+// Mevcut soruları questions.js'den yükle
 let questions = require('./questions');
 
+// OTOMATİK YÖNLENDİRMELER
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'player.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
-// API - Soruları Getir ve Kaydet
+// EDİTÖR API
 app.get('/api/questions', (req, res) => res.json(questions));
 app.post('/api/questions', (req, res) => {
     const { user, pass, newQuestions } = req.body;
@@ -113,4 +115,4 @@ function endQuestionPhase() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sistem aktif.`));
+server.listen(PORT, () => console.log(`Sunucu aktif.`));

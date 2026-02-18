@@ -4,21 +4,21 @@
     <title>Soru Editörü</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 p-6 min-h-screen">
+<body class="bg-slate-100 p-8 min-h-screen font-sans">
     <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-black text-blue-900 uppercase">Müfredat Düzenleme</h1>
-            <div class="space-x-2">
-                <button onclick="addQ()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold">+ Yeni Soru</button>
-                <button onclick="save()" class="bg-blue-700 text-white px-6 py-2 rounded-lg font-black shadow-lg">GÜNCELLE VE ÇIK</button>
+        <div class="flex justify-between items-center mb-12">
+            <h1 class="text-4xl font-black text-blue-900 tracking-tighter uppercase">Klinik Vaka Düzenleme</h1>
+            <div class="space-x-4">
+                <button onclick="addQ()" class="bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold shadow-md">+ Yeni Soru</button>
+                <button onclick="save()" class="bg-blue-700 text-white px-8 py-3 rounded-xl font-black shadow-xl">GÜNCELLE VE ÇIK</button>
             </div>
         </div>
-        <div id="q-list" class="space-y-4"></div>
+        <div id="q-list" class="space-y-6"></div>
     </div>
 
     <script>
         let qData = [];
-        let auth = { user: 'ali', pass: 'ali321' }; // Hoca girişi için sabit şifre
+        let auth = { user: 'ali', pass: 'ali321' };
 
         async function load() {
             const r = await fetch('/api/questions');
@@ -28,14 +28,14 @@
 
         function render() {
             document.getElementById('q-list').innerHTML = qData.map((q, i) => `
-                <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-600">
-                    <div class="flex justify-between mb-4"><span class="font-black text-xs">SORU #${i+1}</span><button onclick="rem(${i})" class="text-red-500 font-bold text-xs">SİL</button></div>
-                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-3 border rounded-xl font-bold mb-4">${q.text}</textarea>
-                    <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-l-8 border-blue-600">
+                    <div class="flex justify-between mb-6"><span class="bg-blue-100 text-blue-800 px-4 py-1 rounded-lg font-black text-xs uppercase">VAKA #${i+1}</span><button onclick="rem(${i})" class="text-red-500 font-black text-xs hover:underline">SİL</button></div>
+                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-4 border-2 rounded-2xl font-bold mb-6 text-lg outline-none focus:border-blue-600 transition">${q.text}</textarea>
+                    <div class="grid grid-cols-2 gap-4">
                         ${q.options.map((o, oi) => `
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
                                 <input type="radio" name="c-${i}" ${q.correct===oi ? 'checked' : ''} onchange="qData[${i}].correct=${oi}">
-                                <input type="text" value="${o}" onchange="qData[${i}].options[${oi}]=this.value" class="w-full p-2 border rounded-lg text-xs">
+                                <input type="text" value="${o}" onchange="qData[${i}].options[${oi}]=this.value" class="w-full p-2 border rounded-lg text-sm font-semibold">
                             </div>
                         `).join('')}
                     </div>
@@ -43,16 +43,20 @@
             `).join('');
         }
 
-        function addQ() { qData.push({text:"Yeni?", options:["","","",""], correct:0}); render(); }
+        function addQ() { qData.push({text:"Yeni Soru?", options:["Şık A","Şık B","Şık C","Şık D"], correct:0}); render(); }
         function rem(i) { qData.splice(i,1); render(); }
 
         async function save() {
-            await fetch('/api/questions', {
+            const res = await fetch('/api/questions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...auth, newQuestions: qData })
             });
-            window.location.href = "admin.html"; // Kayıt sonrası ana panele döner
+            const data = await res.json();
+            if(data.success) {
+                alert("Sorular Başarıyla Güncellendi!");
+                window.location.href = "admin.html"; // Kayıt sonrası ana panele döner
+            }
         }
         load();
     </script>

@@ -2,54 +2,54 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Veteriner Klinik Quiz</title>
+    <title>Katılımcı Ekranı</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.sel { outline: 4px solid white; scale: 1.05; z-index: 20; } .dim { opacity: 0.15; }</style>
+    <style>.sel { outline: 4px solid white; transform: scale(1.05); z-index: 20; box-shadow: 0 0 20px rgba(0,0,0,0.5); } .dim { opacity: 0.1; }</style>
 </head>
 <body class="bg-slate-50 h-screen overflow-hidden font-sans flex flex-col">
 
-    <div id="bar" class="hidden bg-blue-900 text-white p-3 flex justify-between items-center shadow-md">
-        <div class="flex flex-col"><span id="p-name" class="font-bold text-xs truncate max-w-[100px]"></span><span id="q-count" class="text-[10px] opacity-70">Soru: 0/0</span></div>
-        <div class="bg-white/20 px-4 py-1 rounded-full font-black text-xs">SÜRE: <span id="p-timer">10</span></div>
+    <div id="bar" class="hidden bg-blue-900 text-white p-3 flex justify-between items-center shadow-lg">
+        <div class="flex flex-col"><span id="p-name" class="font-bold text-xs truncate max-w-[100px]"></span><span id="q-idx" class="text-[10px] opacity-70 font-black">SORU: 0/0</span></div>
+        <div class="bg-white/20 px-4 py-1 rounded-full font-black text-xs uppercase">SÜRE: <span id="p-timer">10</span></div>
     </div>
 
     <div id="login-screen" class="flex-grow flex flex-col items-center justify-center p-8 space-y-6">
-        <h1 class="text-3xl font-black text-blue-900 text-center tracking-tighter">KLİNİK ANALİZ OTURUMU</h1>
-        <input type="text" id="nick" placeholder="AD SOYAD" class="w-full p-4 text-center border-4 border-slate-200 rounded-2xl outline-none focus:border-blue-600 font-bold">
-        <button onclick="join()" class="w-full bg-blue-700 text-white py-4 rounded-2xl text-xl font-black shadow-lg">OTURUMA KATIL</button>
+        <h1 class="text-3xl font-black text-blue-950 text-center tracking-tighter uppercase leading-none">Veteriner<br>Klinik Oturum</h1>
+        <input type="text" id="nick" placeholder="AD SOYAD" class="w-full p-4 text-center border-4 border-slate-200 rounded-2xl outline-none focus:border-blue-700 font-bold uppercase">
+        <button onclick="join()" class="w-full bg-blue-800 text-white py-5 rounded-2xl text-2xl font-black shadow-xl active:scale-95 transition-all">KATIL</button>
     </div>
 
     <div id="waiting-screen" class="hidden flex-grow flex flex-col items-center justify-center bg-slate-900 text-white p-10 text-center">
         <div class="animate-pulse space-y-4">
-            <h2 class="text-2xl font-black text-blue-400">BAĞLANTI AKTİF</h2>
-            <p class="text-sm opacity-50">Vaka verileri bekleniyor...</p>
+            <h2 class="text-3xl font-black text-blue-400 tracking-tighter">BAĞLANTI TAMAM</h2>
+            <p class="text-sm opacity-50 italic">Hocanın vaka analizini başlatması bekleniyor...</p>
         </div>
     </div>
 
     <div id="game" class="hidden flex-grow flex flex-col p-2 space-y-2">
-        <div class="bg-white p-3 rounded-2xl shadow-sm border-b-4 border-blue-200">
-            <h2 id="q-text" class="text-sm font-bold text-center leading-tight text-slate-800"></h2>
+        <div class="bg-white p-4 rounded-3xl shadow-md border-b-4 border-blue-200">
+            <h2 id="q-text" class="text-base font-bold text-center leading-tight text-slate-800"></h2>
         </div>
         <div class="grid grid-cols-1 gap-1.5 flex-grow">
-            <button onclick="ans(0)" id="b-0" class="bg-rose-500 text-white p-3 rounded-xl font-bold text-xs flex items-center h-[18%]"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">A</span><span class="t truncate"></span></button>
-            <button onclick="ans(1)" id="b-1" class="bg-sky-500 text-white p-3 rounded-xl font-bold text-xs flex items-center h-[18%]"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">B</span><span class="t truncate"></span></button>
-            <button onclick="ans(2)" id="b-2" class="bg-amber-500 text-white p-3 rounded-xl font-bold text-xs flex items-center h-[18%]"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">C</span><span class="t truncate"></span></button>
-            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 text-white p-3 rounded-xl font-bold text-xs flex items-center h-[18%]"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">D</span><span class="t truncate"></span></button>
+            <button onclick="ans(0)" id="b-0" class="bg-rose-500 text-white p-3 rounded-2xl font-black text-xs flex items-center h-[18%] transition-all"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">A</span><span class="t truncate"></span></button>
+            <button onclick="ans(1)" id="b-1" class="bg-sky-500 text-white p-3 rounded-2xl font-black text-xs flex items-center h-[18%] transition-all"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">B</span><span class="t truncate"></span></button>
+            <button onclick="ans(2)" id="b-2" class="bg-amber-500 text-white p-3 rounded-2xl font-black text-xs flex items-center h-[18%] transition-all"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">C</span><span class="t truncate"></span></button>
+            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 text-white p-3 rounded-2xl font-black text-xs flex items-center h-[18%] transition-all"><span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">D</span><span class="t truncate"></span></button>
         </div>
     </div>
 
     <div id="stats" class="hidden flex-grow flex flex-col bg-slate-950 text-white p-6">
         <h2 id="res" class="text-4xl font-black text-center mb-6"></h2>
-        <div class="bg-blue-900/40 p-4 rounded-xl mb-6 border-l-4 border-blue-500">
-            <p class="text-[10px] font-bold text-blue-300">DOĞRU KLİNİK YAKLAŞIM:</p>
-            <p id="cor" class="text-sm font-bold"></p>
+        <div class="bg-blue-900/40 p-5 rounded-2xl mb-8 border-l-4 border-blue-500">
+            <p class="text-[10px] font-bold text-blue-300 uppercase mb-1">DOĞRU KLİNİK YAKLAŞIM:</p>
+            <p id="cor" class="text-base font-black text-indigo-100"></p>
         </div>
         <div id="graph" class="space-y-4"></div>
     </div>
 
     <div id="lb" class="hidden flex-grow flex flex-col bg-blue-950 text-white p-6">
-        <h2 class="text-2xl font-black text-center text-blue-400 mb-8">GÜNCEL SIRALAMA</h2>
+        <h2 class="text-2xl font-black text-center text-blue-400 mb-8 uppercase tracking-widest">Sıralama</h2>
         <div id="lb-list" class="space-y-2"></div>
     </div>
 
@@ -58,7 +58,7 @@
         function join() { me = document.getElementById('nick').value.trim(); if(!me) return; socket.emit('player-join', me); document.getElementById('p-name').innerText = me; }
         socket.on('join-success', () => { show('waiting-screen'); document.getElementById('bar').classList.remove('hidden'); });
         socket.on('new-question', (d) => {
-            show('game'); document.getElementById('q-count').innerText = `Soru: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; document.getElementById('p-timer').innerText = d.time;
+            show('game'); document.getElementById('q-idx').innerText = `SORU: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; document.getElementById('p-timer').innerText = d.time;
             for(let i=0; i<4; i++){ const b=document.getElementById(`b-${i}`); b.classList.remove('sel','dim'); b.querySelector('.t').innerText=d.options[i]; b.disabled=false; }
         });
         socket.on('timer-tick', (t) => document.getElementById('p-timer').innerText = t);
@@ -70,11 +70,11 @@
             document.getElementById('cor').innerText = d.correctText;
             const g = document.getElementById('graph'); g.innerHTML = '';
             const max = Math.max(...d.stats) || 1;
-            d.stats.forEach((c, i) => { const w = (c/max)*100; g.innerHTML += `<div class="flex items-center gap-3"><div class="text-[10px] w-4 font-bold">${['A','B','C','D'][i]}</div><div class="flex-grow h-3 bg-white/10 rounded-full"><div class="bg-blue-500 h-full rounded-full" style="width:${w}%"></div></div><div class="text-[10px] w-4 text-right">${c}</div></div>`; });
+            d.stats.forEach((c, i) => { const w = (c/max)*100; g.innerHTML += `<div class="flex items-center gap-3"><div class="text-xs w-4 font-bold">${['A','B','C','D'][i]}</div><div class="flex-grow h-4 bg-white/10 rounded-full overflow-hidden"><div class="bg-blue-500 h-full" style="width:${w}%"></div></div><div class="text-xs w-4 text-right">${c}</div></div>`; });
         });
         socket.on('show-leaderboard', (list) => {
             show('lb');
-            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="flex justify-between items-center ${p.nickname === me ? 'bg-blue-600 ring-1 ring-white' : 'bg-white/5'} p-3 rounded-xl"><span class="text-xs font-bold">#${i+1} ${p.nickname}</span><span class="text-xs font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join('');
+            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="flex justify-between items-center ${p.nickname === me ? 'bg-blue-600 ring-2 ring-white' : 'bg-white/5'} p-4 rounded-2xl"><span class="text-xs font-bold uppercase">#${i+1} ${p.nickname}</span><span class="text-xs font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join('');
         });
         function show(id) { ['login-screen','waiting-screen','game','stats','lb'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
