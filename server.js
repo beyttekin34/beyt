@@ -105,4 +105,5 @@ function endQuestionPhase() {
     }, 5000); 
 }
 
-server.listen(3000, () => console.log('Sistem 10 saniye kuralıyla aktif!'));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Oturum Yönetim Sistemi ${PORT} portu üzerinde aktif.`));
