@@ -18,36 +18,36 @@
     </div>
 
     <div id="dashboard" class="hidden min-h-screen flex flex-col items-center justify-center space-y-12 p-8 text-center">
-        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase italic">SORU YÖNETİM MERKEZİ</h1>
+        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase italic text-shadow-lg">SORU YÖNETİM MERKEZİ</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-3xl font-black hover:scale-105 transition-all shadow-2xl">YARIŞMA LOBİSİ</button>
-            <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-3xl font-black text-center hover:scale-105 transition-all shadow-2xl flex items-center justify-center uppercase">Soruları Düzenle</a>
+            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-4xl font-black hover:scale-105 transition-all shadow-2xl">YARIŞMA LOBİSİ</button>
+            <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-4xl font-black text-center hover:scale-105 transition-all shadow-2xl flex items-center justify-center uppercase">Soruları Düzenle</a>
         </div>
     </div>
 
     <div id="lobby" class="hidden min-h-screen flex flex-col items-center justify-center p-10">
-        <h2 class="text-4xl font-black mb-6 text-indigo-300 uppercase italic">Kayıtlı Öğrenciler: <span id="count">0</span></h2>
+        <h2 class="text-4xl font-black mb-8 text-indigo-300 uppercase italic">Kayıtlı Öğrenciler: <span id="count">0</span></h2>
         
-        <div class="bg-white p-4 rounded-3xl shadow-2xl mb-10 flex flex-col items-center animate-fade-in">
-            <div id="qrcode" class="mb-2"></div>
-            <p class="text-indigo-900 font-black text-sm uppercase">Katılmak İçin Okutun</p>
+        <div class="bg-white p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(79,70,229,0.5)] mb-12 flex flex-col items-center animate-bounce-subtle">
+            <div id="qrcode" class="p-2"></div>
+            <p class="text-indigo-900 font-black text-xl uppercase mt-4 tracking-widest">GİRİŞ İÇİN OKUTUN</p>
         </div>
         
-        <div id="list" class="flex flex-wrap justify-center gap-4 mb-16 w-full max-w-4xl"></div>
+        <div id="list" class="flex flex-wrap justify-center gap-4 mb-16 w-full max-w-5xl"></div>
         <div class="flex gap-6">
-            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-16 py-6 rounded-full text-4xl font-black shadow-2xl hover:bg-indigo-500 transition-all">YARIŞMAYI BAŞLAT</button>
-            <button onclick="show('dashboard')" class="bg-slate-700 px-8 py-6 rounded-full text-xl font-bold hover:bg-slate-600 transition-all">GERİ DÖN</button>
+            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-20 py-8 rounded-full text-5xl font-black shadow-2xl hover:bg-indigo-500 transition-all active:scale-95">YARIŞMAYI BAŞLAT</button>
+            <button onclick="show('dashboard')" class="bg-slate-700 px-10 py-8 rounded-full text-2xl font-bold hover:bg-slate-600 transition-all">GERİ DÖN</button>
         </div>
     </div>
 
     <div id="game" class="hidden p-6 flex flex-col items-center">
         <div class="flex justify-between w-full max-w-6xl mb-12 mt-10">
-            <div class="text-3xl font-black text-indigo-400">MEVCUT: <span id="q-idx">0/0</span></div>
-            <div class="w-20 h-20 rounded-full border-4 border-indigo-500 flex items-center justify-center text-3xl font-black animate-pulse">
+            <div class="text-4xl font-black text-indigo-400">MEVCUT: <span id="q-idx">0/0</span></div>
+            <div class="w-24 h-24 rounded-full border-8 border-indigo-500 flex items-center justify-center text-4xl font-black animate-pulse">
                 <span id="timer">10</span>
             </div>
         </div>
-        <h2 id="q-text" class="text-4xl font-black text-center mb-12 max-w-5xl leading-tight text-white italic"></h2>
+        <h2 id="q-text" class="text-5xl font-black text-center mb-16 max-w-5xl leading-tight text-white italic"></h2>
         <div id="options" class="grid grid-cols-2 gap-6 w-full max-w-6xl"></div>
         <div id="stats" class="hidden w-full max-w-4xl mt-12 bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
             <h3 class="text-2xl font-bold mb-6 text-center text-indigo-300">ÖĞRENCİ YANIT DAĞILIMI</h3>
@@ -56,13 +56,12 @@
     </div>
 
     <div id="leaderboard" class="hidden min-h-screen flex flex-col items-center justify-center p-10">
-        <h1 id="lb-title" class="text-6xl font-black mb-16 text-indigo-400 uppercase tracking-tighter italic">Başarı Sıralaması</h1>
+        <h1 id="lb-title" class="text-7xl font-black mb-16 text-indigo-400 uppercase tracking-tighter italic">Başarı Sıralaması</h1>
         <div id="lb-list" class="w-full max-w-4xl space-y-4"></div>
     </div>
 
     <script>
         const socket = io();
-        // Oturum Kontrolü
         if (localStorage.getItem('admin_auth') === 'true') { show('dashboard'); } 
         else { document.getElementById('login-screen').classList.remove('hidden'); }
 
@@ -72,18 +71,17 @@
             else { alert("Hatalı Giriş!"); }
         }
 
-        // QR KOD OLUŞTURMA FONKSİYONU
         let qrGenerated = false;
         function showLobby() { 
             show('lobby');
             if (!qrGenerated) {
-                // Sitenin ana adresini al (örn: https://ic-hastaliklari-quiz.onrender.com)
                 const joinLink = window.location.origin;
+                // QR Kod Boyutu 350px'e çıkarıldı
                 new QRCode(document.getElementById("qrcode"), {
                     text: joinLink,
-                    width: 180,
-                    height: 180,
-                    colorDark : "#312e81", // Koyu indigo rengi
+                    width: 350,
+                    height: 350,
+                    colorDark : "#1e1b4b", 
                     colorLight : "#ffffff",
                     correctLevel : QRCode.CorrectLevel.H
                 });
@@ -115,5 +113,9 @@
 
         function show(id) { ['dashboard','lobby','game','leaderboard'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
+    <style>
+        @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-bounce-subtle { animation: bounce-subtle 3s infinite ease-in-out; }
+    </style>
 </body>
 </html>
