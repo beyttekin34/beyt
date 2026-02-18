@@ -1,18 +1,17 @@
 module.exports = [
     {
-        text: "Kedilerde FIP'in (Feline Infectious Peritonitis) efüziv formunda en sık görülen klinik bulgu hangisidir?",
-        options: ["Şiddetli ishal", "Abdominal boşlukta sıvı birikimi (Assit)", "Kuru öksürük", "Ani körlük"],
-        correct: 1 // 0: A, 1: B, 2: C, 3: D (Index mantığı)
+        text: "Kedi Enfeksiyöz Peritoniti (FIP) tanısında 'altın standart' kabul edilen bulgu hangisidir?",
+        options: ["Rivalta Testi Pozitifliği", "Albumin/Globulin Oranı < 0.4", "Pyogranülomatöz Vaskülitis (Histopatoloji)", "Yüksek Koronavirüs Titresi"],
+        correct: 2
     },
     {
-        text: "Gastrik Dilatasyon Volvulus (GDV) şüphesi olan bir köpekte ilk yapılması gereken acil müdahale nedir?",
-        options: ["Hemen beslemek", "Sıvı sağaltımı ve şok tedavisi", "Sakinleştirici vermek", "Sadece röntgen çekip beklemek"],
+        text: "Gastrik Dilatasyon Volvulus (GDV) vakalarında radyografide görülen patognomonik görüntü nedir?",
+        options: ["Kum Saati Görünümü", "Double Bubble (Çift Balon) / Popeye Belirtisi", "Sıvı-Gaz Seviyelenmesi", "Megazofagus"],
         correct: 1
     },
     {
-        text: "Köpek Gençlik Hastalığı (Canine Distemper) hangi sistemleri etkiler?",
-        options: ["Sadece Solunum", "Sadece Sindirim", "Gastrointestinal, Solunum ve Sinir sistemi", "Sadece Deri"],
-        correct: 2
-    },
-    // Buraya istediğin kadar soru ekle { ... }, { ... } şeklinde
+        text: "Canine Distemper virüsünün epitelyotropik özelliği sonucu en sık hangi klinik bulgu görülür?",
+        options: ["Hiperkeratozis (Hard Pad Disease)", "Kanlı Diş Eti", "Anemi", "Poliüri/Polidipsi"],
+        correct: 0
+    }
 ];

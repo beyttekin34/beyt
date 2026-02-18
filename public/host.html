@@ -1,123 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vet-Quiz Host</title>
+    <title>Klinik Oturum Yönetimi</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-purple-900 text-white font-sans overflow-hidden h-screen flex flex-col">
+<body class="bg-indigo-950 text-white font-sans h-screen flex flex-col overflow-hidden">
 
-    <div id="lobby" class="flex flex-col items-center justify-center h-full text-center p-8">
-        <h1 class="text-6xl font-bold mb-8">İç Hastalıkları Quiz</h1>
-        <div class="bg-white/10 p-8 rounded-xl w-full max-w-4xl backdrop-blur-sm">
-            <h2 class="text-3xl mb-4">Katılanlar (<span id="player-count">0</span>)</h2>
-            <div id="player-list" class="flex flex-wrap justify-center gap-3 min-h-[100px] max-h-[300px] overflow-y-auto p-4"></div>
-        </div>
-        <button onclick="startGame()" class="mt-12 bg-green-500 hover:bg-green-600 text-white px-16 py-6 rounded-full font-bold text-4xl shadow-2xl hover:scale-105 transition">BAŞLAT 🚀</button>
-    </div>
-
-    <div id="game-area" class="hidden h-full flex flex-col p-4 relative">
-        <div class="flex justify-between items-center mb-4">
-            <span id="q-counter" class="text-2xl font-bold">Soru 1/10</span>
-            <div class="bg-purple-800 rounded-full w-24 h-24 flex items-center justify-center border-4 border-white">
-                <span id="timer" class="text-5xl font-bold">10</span>
-            </div>
-        </div>
-        <div class="flex-grow flex items-center justify-center mb-4">
-            <h2 id="question-text" class="text-5xl font-bold text-center bg-white text-purple-900 p-12 rounded-2xl shadow-2xl w-full mx-8">Soru Yükleniyor...</h2>
+    <div id="lobby" class="flex-grow flex flex-col items-center justify-center p-10">
+        <h1 class="text-6xl font-black mb-4 text-indigo-400">İÇ HASTALIKLARI QUİZ</h1>
+        <p class="text-2xl mb-12 opacity-70">Oturuma Katılmak İçin Linki Kullanınız</p>
+        
+        <div class="bg-white/5 p-10 rounded-3xl border border-white/10 w-full max-w-4xl text-center">
+            <h2 class="text-2xl font-bold mb-6">KAYITLI KATILIMCILAR (<span id="count">0</span>)</h2>
+            <div id="list" class="flex flex-wrap justify-center gap-4 max-h-[300px] overflow-y-auto p-4"></div>
         </div>
         
-        <div id="stats-view" class="hidden absolute inset-0 bg-black/90 z-20 flex flex-col items-center justify-center">
-            <h2 class="text-4xl font-bold mb-8 text-white">CEVAP DAĞILIMI</h2>
-            <div id="graph-bars" class="flex items-end justify-center gap-16 h-96 w-full px-32"></div>
-        </div>
-
-        <div id="options-grid" class="grid grid-cols-2 gap-6 h-64 text-3xl font-bold">
-            <div id="opt-0" class="bg-red-500 flex items-center p-6 rounded-xl text-white shadow-lg">A</div>
-            <div id="opt-1" class="bg-blue-500 flex items-center p-6 rounded-xl text-white shadow-lg">B</div>
-            <div id="opt-2" class="bg-yellow-500 flex items-center p-6 rounded-xl text-white shadow-lg">C</div>
-            <div id="opt-3" class="bg-green-500 flex items-center p-6 rounded-xl text-white shadow-lg">D</div>
-        </div>
+        <button onclick="start()" class="mt-12 bg-indigo-600 hover:bg-indigo-500 px-16 py-6 rounded-3xl text-3xl font-black shadow-2xl transition-all hover:scale-105 active:scale-95">OTURUMU BAŞLAT</button>
     </div>
 
-    <div id="leaderboard" class="hidden h-full flex flex-col items-center justify-center bg-blue-900">
-        <h1 class="text-6xl font-bold mb-12 text-yellow-400">PUAN DURUMU</h1>
-        <div id="score-list" class="w-2/3 space-y-4"></div>
+    <div id="game" class="hidden flex-grow flex flex-col items-center justify-center p-20">
+        <div id="timer-circle" class="w-32 h-32 rounded-full border-8 border-indigo-500 flex items-center justify-center text-5xl font-black mb-12 animate-pulse">
+            <span id="timer">10</span>
+        </div>
+        <h2 id="q-text" class="text-6xl font-black text-center leading-tight mb-20 max-w-6xl"></h2>
+        <div id="options" class="grid grid-cols-2 gap-8 w-full max-w-6xl"></div>
     </div>
 
-    <div id="final-screen" class="hidden h-full flex flex-col items-center justify-center bg-black">
-        <h1 class="text-7xl font-bold text-yellow-400 mb-16">🏆 KAZANANLAR 🏆</h1>
-        <div class="flex items-end justify-center gap-4 w-full px-12 h-1/2">
-            <div class="flex flex-col items-center w-1/4"><span id="p2-name" class="text-2xl font-bold mb-2 text-white">Yok</span><div class="bg-gray-400 w-full h-48 flex items-center justify-center text-6xl font-black">2</div></div>
-            <div class="flex flex-col items-center w-1/4"><span id="p1-name" class="text-3xl font-bold mb-2 text-yellow-300">Yok</span><div class="bg-yellow-500 w-full h-80 flex items-center justify-center text-8xl font-black">1</div></div>
-            <div class="flex flex-col items-center w-1/4"><span id="p3-name" class="text-2xl font-bold mb-2 text-white">Yok</span><div class="bg-orange-700 w-full h-32 flex items-center justify-center text-6xl font-black">3</div></div>
-        </div>
+    <div id="leaderboard" class="hidden flex-grow flex flex-col items-center justify-center p-20">
+        <h1 class="text-7xl font-black mb-16 text-indigo-400 uppercase">GÜNCEL SIRALAMA</h1>
+        <div id="lb-list" class="w-full max-w-4xl space-y-4"></div>
     </div>
 
     <script>
         const socket = io();
 
-        socket.on('update-player-list', (players) => {
-            document.getElementById('player-count').innerText = players.length;
-            document.getElementById('player-list').innerHTML = players.map(p => `<span class="bg-purple-600 px-4 py-2 rounded-full text-lg shadow-md m-1">${p.nickname}</span>`).join('');
+        socket.on('update-player-list', (p) => {
+            document.getElementById('count').innerText = p.length;
+            document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600/50 px-6 py-2 rounded-full font-bold border border-indigo-400">${x.nickname}</div>`).join('');
         });
 
-        function startGame() { socket.emit('start-game'); }
+        function start() { socket.emit('start-game'); }
 
-        socket.on('new-question', (data) => {
-            document.getElementById('lobby').classList.add('hidden');
-            document.getElementById('leaderboard').classList.add('hidden');
-            document.getElementById('game-area').classList.remove('hidden');
-            document.getElementById('stats-view').classList.add('hidden');
-            
-            document.getElementById('question-text').innerText = data.text;
-            document.getElementById('q-counter').innerText = `Soru ${data.qIndex} / ${data.total}`;
-            document.getElementById('timer').innerText = data.time;
-
-            const colors = ['bg-red-500', 'bg-blue-500', 'bg-yellow-500', 'bg-green-500'];
-            data.options.forEach((opt, i) => {
-                const el = document.getElementById(`opt-${i}`);
-                el.innerText = opt;
-                el.className = `${colors[i]} flex items-center p-6 rounded-xl text-white shadow-lg opacity-100`;
-            });
-        });
-
-        socket.on('timer-tick', (t) => document.getElementById('timer').innerText = t);
-
-        socket.on('show-graph', (data) => {
-            const statsView = document.getElementById('stats-view');
-            statsView.classList.remove('hidden');
-            const bars = document.getElementById('graph-bars');
-            bars.innerHTML = '';
-            const maxVal = Math.max(...data.stats) || 1;
-            const colors = ['bg-red-500', 'bg-blue-500', 'bg-yellow-500', 'bg-green-500'];
-
-            data.stats.forEach((count, i) => {
-                const h = (count / maxVal) * 100;
-                const border = (i === data.correctIndex) ? 'border-4 border-white brightness-125' : 'opacity-60';
-                bars.innerHTML += `<div class="flex flex-col items-center justify-end h-full w-32"><span class="text-3xl font-bold text-white mb-2">${count}</span><div class="${colors[i]} w-full rounded-t-lg transition-all ${border}" style="height: ${h}%"></div><span class="text-4xl mt-2 text-white">${i===data.correctIndex ? '✅':''}</span></div>`;
-            });
-        });
-
-        socket.on('show-leaderboard', (players) => {
-            document.getElementById('game-area').classList.add('hidden');
-            document.getElementById('leaderboard').classList.remove('hidden');
-            document.getElementById('score-list').innerHTML = players.map((p, i) => `
-                <div class="flex justify-between bg-blue-800 p-6 rounded-xl items-center shadow-lg w-full text-white">
-                    <span class="text-4xl font-bold w-12 text-yellow-400">#${i+1}</span>
-                    <span class="text-3xl">${p.nickname}</span>
-                    <span class="text-3xl font-bold text-green-400">${Math.floor(p.score)} P</span>
+        socket.on('new-question', (d) => {
+            show('game');
+            document.getElementById('q-text').innerText = d.text;
+            document.getElementById('timer').innerText = d.time;
+            const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
+            document.getElementById('options').innerHTML = d.options.map((o, i) => `
+                <div class="${colors[i]} p-8 rounded-3xl text-3xl font-black shadow-xl flex items-center">
+                    <span class="bg-black/20 w-16 h-16 flex items-center justify-center rounded-2xl mr-6">${['A','B','C','D'][i]}</span>
+                    ${o}
                 </div>
             `).join('');
         });
 
-        socket.on('game-over', (players) => {
-            document.getElementById('leaderboard').classList.add('hidden');
-            document.getElementById('final-screen').classList.remove('hidden');
-            if(players[0]) document.getElementById('p1-name').innerText = players[0].nickname;
-            if(players[1]) document.getElementById('p2-name').innerText = players[1].nickname;
-            if(players[2]) document.getElementById('p3-name').innerText = players[2].nickname;
+        socket.on('timer-tick', (t) => document.getElementById('timer').innerText = t);
+
+        socket.on('show-leaderboard', (list) => {
+            show('leaderboard');
+            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `
+                <div class="flex justify-between items-center bg-white/5 p-8 rounded-3xl border-l-8 border-indigo-500">
+                    <span class="text-4xl font-black">#${i+1} ${p.nickname}</span>
+                    <span class="text-4xl font-black text-emerald-400">${Math.floor(p.score)} P</span>
+                </div>
+            `).join('');
         });
+
+        socket.on('game-over', (list) => {
+            show('leaderboard');
+            document.querySelector('h1').innerText = "OTURUM SONUÇLARI";
+        });
+
+        function show(id) {
+            ['lobby','game','leaderboard'].forEach(x => document.getElementById(x).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
     </script>
 </body>
 </html>

@@ -2,48 +2,55 @@ const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const path = require('path');
+const questions = require('./questions');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-
-const questions = require('./questions');
+const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => res.redirect('/player.html'));
+
+// Ana adrese girenleri otomatik oyuncu ekranına yönlendirir
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'player.html'));
+});
 
 let players = {};
 let currentQuestionIndex = 0;
 let isGameRunning = false;
 let answers = {};
 let timer;
-let timeLeft = 10; // Her soru 10 saniye
+let timeLeft = 10;
 
 io.on('connection', (socket) => {
+    // Katılımcı Girişi
     socket.on('player-join', (nickname) => {
-        if (isGameRunning) return socket.emit('error-msg', 'Oyun başladı, giremezsin!');
+        if (isGameRunning) return socket.emit('error-msg', 'Oturum devam ediyor, giriş kapalı.');
         players[socket.id] = { nickname, score: 0, correctCount: 0 };
         socket.emit('join-success');
         io.emit('update-player-list', Object.values(players));
     });
 
+    // Oturumu Başlat
     socket.on('start-game', () => {
-        isGameRunning = true;
-        currentQuestionIndex = 0;
-        sendNextQuestion();
+        if (!isGameRunning) {
+            isGameRunning = true;
+            currentQuestionIndex = 0;
+            sendNextQuestion();
+        }
     });
 
+    // Yanıt Gönderimi ve Hız Puanlaması
     socket.on('submit-answer', (answerIndex) => {
-        if (!isGameRunning) return;
+        if (!isGameRunning || answers[socket.id] !== undefined) return;
         const player = players[socket.id];
-        if (player && answers[socket.id] === undefined) {
+        if (player) {
             answers[socket.id] = answerIndex;
-            
-            // Hız Odaklı Puanlama
-            if (answerIndex === questions[currentQuestionIndex].correct) {
-                // Temel 500 puan + (Kalan Saniye * 50) => 10 saniyede basan 1000 puan alır
-                const speedBonus = timeLeft * 50; 
-                player.score += 500 + speedBonus;
+            const correctIdx = questions[currentQuestionIndex].correct;
+            if (answerIndex === correctIdx) {
+                // Temel 500 + Kalan Saniye * 50 (Maks 1000 Puan)
+                const bonus = timeLeft * 50;
+                player.score += 500 + bonus;
                 player.correctCount += 1;
             }
         }
@@ -57,14 +64,15 @@ io.on('connection', (socket) => {
 
 function sendNextQuestion() {
     if (currentQuestionIndex >= questions.length) {
-        io.emit('game-over', Object.values(players).sort((a, b) => b.score - a.score));
+        const finalResults = Object.values(players).sort((a, b) => b.score - a.score);
+        io.emit('game-over', finalResults);
         isGameRunning = false;
         return;
     }
 
     answers = {}; 
-    timeLeft = 10; // Süreyi sıfırla
-
+    timeLeft = 10;
+    
     io.emit('new-question', { 
         text: questions[currentQuestionIndex].text, 
         options: questions[currentQuestionIndex].options,
@@ -87,18 +95,21 @@ function sendNextQuestion() {
 function endQuestionPhase() {
     const stats = [0, 0, 0, 0];
     Object.values(answers).forEach(ans => { if (ans >= 0) stats[ans]++; });
-    const correctIndex = questions[currentQuestionIndex].correct;
+    const correctIdx = questions[currentQuestionIndex].correct;
 
-    // Herkese detaylı verileri gönder
+    // Sonuçları ve istatistikleri gönder
     io.emit('question-result-data', {
-        correctIndex: correctIndex,
-        correctText: questions[currentQuestionIndex].options[correctIndex],
+        correctIndex: correctIdx,
+        correctText: questions[currentQuestionIndex].options[correctIdx],
         stats: stats,
-        playersAnswers: answers // Kimin ne dediği (opsiyonel gösterim için)
+        playersAnswers: answers
     });
 
+    // 5 saniye analiz ekranı, sonra 5 saniye liderlik tablosu
     setTimeout(() => {
-        io.emit('show-leaderboard', Object.values(players).sort((a, b) => b.score - a.score).slice(0, 5));
+        const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+        io.emit('show-leaderboard', sorted);
+        
         setTimeout(() => {
             currentQuestionIndex++;
             sendNextQuestion();
@@ -107,4 +118,4 @@ function endQuestionPhase() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Oturum Yönetim Sistemi ${PORT} portu üzerinde aktif.`));
+server.listen(PORT, () => console.log(`Sunucu ${PORT} portunda aktif.`));

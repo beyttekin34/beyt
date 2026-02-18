@@ -2,183 +2,139 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>İç Hastalıkları Değerlendirme Sistemi</title>
+    <title>Katılımcı Paneli</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Seçilen şıkkın belirginleşmesi için özel stil */
-        .selected-option { 
-            border: 4px solid white !important; 
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            z-index: 10;
-        }
-        .dimmed-option { opacity: 0.2; }
+        .selected { border: 4px solid white !important; transform: scale(1.02); z-index: 10; }
+        .dimmed { opacity: 0.25; }
     </style>
 </head>
-<body class="bg-gray-100 h-screen overflow-hidden font-sans flex flex-col">
+<body class="bg-slate-100 h-screen overflow-hidden font-sans flex flex-col">
 
-    <div id="top-bar" class="hidden bg-slate-800 text-white p-2 flex justify-between items-center text-sm font-semibold">
-        <span id="p-name-display" class="truncate max-w-[150px]"></span>
-        <div class="bg-purple-600 rounded-full px-3 py-1">
-            Kalan Süre: <span id="p-timer">10</span>s
+    <div id="top-bar" class="hidden bg-slate-900 text-white p-3 flex justify-between items-center shadow-lg">
+        <span id="p-name" class="font-bold truncate max-w-[140px]"></span>
+        <div class="bg-indigo-600 px-4 py-1 rounded-full font-black text-sm">KALAN: <span id="p-timer">10</span>s</div>
+    </div>
+
+    <div id="login-screen" class="flex-grow flex flex-col items-center justify-center p-8 space-y-6">
+        <h1 class="text-3xl font-black text-slate-800 text-center uppercase tracking-tighter">Klinik Oturum Girişi</h1>
+        <input type="text" id="nickname" placeholder="AD SOYAD" class="w-full p-5 text-xl text-center border-4 border-slate-300 rounded-3xl focus:border-indigo-500 outline-none uppercase font-bold">
+        <button onclick="join()" class="w-full bg-indigo-700 text-white py-5 rounded-3xl text-2xl font-black shadow-xl active:scale-95 transition-all">KATIL</button>
+    </div>
+
+    <div id="waiting-screen" class="hidden flex-grow flex flex-col items-center justify-center bg-slate-800 text-white p-10 text-center">
+        <div class="animate-pulse space-y-4">
+            <h2 class="text-3xl font-black text-indigo-400">BAĞLANTI BAŞARILI</h2>
+            <p class="text-lg opacity-60 italic">Vaka analizi başlatılması bekleniyor...</p>
         </div>
     </div>
 
-    <div id="login-screen" class="flex-grow flex flex-col items-center justify-center p-6 space-y-4">
-        <h1 class="text-3xl font-bold text-slate-800 text-center">Klinik Değerlendirme Oturumu</h1>
-        <input type="text" id="nickname" placeholder="ADINIZI VE SOYADINIZI GİRİNİZ" class="w-full p-4 text-lg text-center border-2 border-slate-300 rounded-xl outline-none focus:border-purple-600 uppercase font-bold">
-        <button onclick="joinGame()" class="w-full bg-purple-700 text-white py-4 rounded-xl text-xl font-bold shadow-md active:scale-95 transition">OTURUMA KATIL</button>
-    </div>
-
-    <div id="waiting-screen" class="hidden flex-grow flex flex-col items-center justify-center bg-slate-700 text-white p-6 text-center">
-        <div class="animate-pulse">
-            <h2 class="text-2xl font-bold mb-2 text-yellow-400">Veri İletimi Bekleniyor</h2>
-            <p class="text-sm opacity-80">Oturum yöneticisinin onayı ile soru ekrana gelecektir.</p>
+    <div id="game-controller" class="hidden flex-grow flex flex-col p-3 space-y-3">
+        <div class="bg-white p-4 rounded-3xl shadow-xl border-b-8 border-indigo-200">
+            <h2 id="q-text" class="text-lg font-bold text-center leading-tight text-slate-800"></h2>
         </div>
-    </div>
-
-    <div id="stats-screen" class="hidden flex-grow flex flex-col bg-slate-900 text-white p-4 overflow-y-auto">
-        <h2 id="result-status" class="text-3xl font-black text-center mb-4"></h2>
-        <div class="bg-white/5 p-3 rounded-lg mb-4 border-l-4 border-blue-500">
-            <p class="text-gray-400 text-xs uppercase tracking-wider">Tanımlanan Doğru Yanıt:</p>
-            <p id="correct-ans-text" class="text-lg font-bold text-blue-300"></p>
-        </div>
-        <h3 class="text-center text-sm font-bold mb-4 text-gray-400">KATILIMCI YANIT DAĞILIMI</h3>
-        <div id="mini-graph" class="space-y-2 mb-4"></div>
-    </div>
-
-    <div id="leaderboard-screen" class="hidden flex-grow flex flex-col bg-blue-950 text-white p-4">
-        <h2 class="text-2xl font-black text-center text-yellow-500 mb-4">BAŞARI SIRALAMASI</h2>
-        <div id="player-score-list" class="space-y-2"></div>
-    </div>
-
-    <div id="game-controller" class="hidden flex-grow flex flex-col p-2 bg-gray-100">
-        <div class="bg-white p-3 rounded-xl shadow-sm mb-2 border border-slate-200">
-            <h2 id="p-q-text" class="text-base font-bold text-center leading-snug text-slate-800"></h2>
-        </div>
-        
-        <div class="grid grid-cols-1 gap-1.5 flex-grow">
-            <button onclick="sendAns(0)" id="b-0" class="bg-red-500 text-white p-3 rounded-lg font-bold text-sm text-left shadow-sm active:scale-95 flex items-center h-[18%] transition-all">
-                <span class="bg-black/20 px-2 py-0.5 rounded mr-3 text-xs">A</span> <span class="t truncate"></span>
+        <div class="flex-grow grid grid-cols-1 gap-2">
+            <button onclick="ans(0)" id="b-0" class="bg-rose-500 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
+                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">A</span> <span class="t truncate"></span>
             </button>
-            <button onclick="sendAns(1)" id="b-1" class="bg-blue-500 text-white p-3 rounded-lg font-bold text-sm text-left shadow-sm active:scale-95 flex items-center h-[18%] transition-all">
-                <span class="bg-black/20 px-2 py-0.5 rounded mr-3 text-xs">B</span> <span class="t truncate"></span>
+            <button onclick="ans(1)" id="b-1" class="bg-sky-500 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
+                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">B</span> <span class="t truncate"></span>
             </button>
-            <button onclick="sendAns(2)" id="b-2" class="bg-yellow-500 text-white p-3 rounded-lg font-bold text-sm text-left shadow-sm active:scale-95 flex items-center h-[18%] transition-all">
-                <span class="bg-black/20 px-2 py-0.5 rounded mr-3 text-xs">C</span> <span class="t truncate"></span>
+            <button onclick="ans(2)" id="b-2" class="bg-amber-500 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
+                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">C</span> <span class="t truncate"></span>
             </button>
-            <button onclick="sendAns(3)" id="b-3" class="bg-green-600 text-white p-3 rounded-lg font-bold text-sm text-left shadow-sm active:scale-95 flex items-center h-[18%] transition-all">
-                <span class="bg-black/20 px-2 py-0.5 rounded mr-3 text-xs">D</span> <span class="t truncate"></span>
+            <button onclick="ans(3)" id="b-3" class="bg-emerald-600 text-white p-4 rounded-2xl font-black text-sm text-left flex items-center h-[18%] transition-all shadow-md">
+                <span class="bg-black/20 w-8 h-8 flex items-center justify-center rounded-lg mr-4">D</span> <span class="t truncate"></span>
             </button>
         </div>
+    </div>
+
+    <div id="stats-screen" class="hidden flex-grow flex flex-col bg-slate-900 text-white p-6">
+        <h2 id="res-status" class="text-4xl font-black text-center mb-6"></h2>
+        <div class="bg-indigo-900/40 p-5 rounded-2xl border-l-8 border-indigo-500 mb-8">
+            <p class="text-indigo-300 text-xs font-bold uppercase mb-1">DOĞRU KLİNİK YAKLAŞIM:</p>
+            <p id="correct-txt" class="text-xl font-black"></p>
+        </div>
+        <div id="mini-graph" class="space-y-4"></div>
+    </div>
+
+    <div id="leaderboard-screen" class="hidden flex-grow flex flex-col bg-indigo-950 text-white p-6">
+        <h2 class="text-3xl font-black text-center text-indigo-400 mb-8 tracking-tighter">BAŞARI SIRALAMASI</h2>
+        <div id="lb-list" class="space-y-3"></div>
     </div>
 
     <script>
         const socket = io();
-        let myName = "";
+        let me = "";
 
-        function joinGame() {
-            myName = document.getElementById('nickname').value.trim();
-            if(!myName) return;
-            socket.emit('player-join', myName);
-            document.getElementById('p-name-display').innerText = myName;
+        function join() {
+            me = document.getElementById('nickname').value.trim();
+            if(!me) return;
+            socket.emit('player-join', me);
+            document.getElementById('p-name').innerText = me;
         }
 
-        socket.on('join-success', () => {
-            toggle('waiting-screen');
-            document.getElementById('top-bar').classList.remove('hidden');
-        });
+        socket.on('join-success', () => { toggle('waiting-screen'); document.getElementById('top-bar').classList.remove('hidden'); });
 
-        socket.on('new-question', (data) => {
+        socket.on('new-question', (d) => {
             toggle('game-controller');
-            document.getElementById('p-q-text').innerText = data.text;
-            document.getElementById('p-timer').innerText = data.time;
-            
+            document.getElementById('q-text').innerText = d.text;
+            document.getElementById('p-timer').innerText = d.time;
             for(let i=0; i<4; i++) {
-                const btn = document.getElementById(`b-${i}`);
-                btn.classList.remove('selected-option', 'dimmed-option', 'opacity-40');
-                btn.querySelector('.t').innerText = data.options[i];
-                btn.disabled = false;
+                const b = document.getElementById(`b-${i}`);
+                b.classList.remove('selected','dimmed');
+                b.querySelector('.t').innerText = d.options[i];
+                b.disabled = false;
             }
         });
 
         socket.on('timer-tick', (t) => document.getElementById('p-timer').innerText = t);
 
-        function sendAns(idx) {
-            socket.emit('submit-answer', idx);
-            
-            // Görsel Geri Bildirim: Seçilen şıkkı vurgula, diğerlerini soluklaştır
-            for(let i=0; i<4; i++) {
-                const btn = document.getElementById(`b-${i}`);
-                btn.disabled = true;
-                if(i === idx) {
-                    btn.classList.add('selected-option');
-                } else {
-                    btn.classList.add('dimmed-option');
-                }
+        function ans(i) {
+            socket.emit('submit-answer', i);
+            for(let j=0; j<4; j++) {
+                const b = document.getElementById(`b-${j}`);
+                b.disabled = true;
+                if(i===j) b.classList.add('selected'); else b.classList.add('dimmed');
             }
         }
 
-        socket.on('question-result-data', (data) => {
+        socket.on('question-result-data', (d) => {
             toggle('stats-screen');
-            const myAns = data.playersAnswers[socket.id];
-            const status = document.getElementById('result-status');
+            const myA = d.playersAnswers[socket.id];
+            const s = document.getElementById('res-status');
+            s.innerText = (myA === d.correctIndex) ? "BAŞARILI ✅" : "HATALI ❌";
+            s.className = `text-4xl font-black text-center mb-6 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
+            document.getElementById('correct-txt').innerText = d.correctText;
             
-            if(myAns === data.correctIndex) {
-                status.innerText = "DOĞRU YANIT ✅";
-                status.className = "text-3xl font-black text-center mb-4 text-green-500";
-            } else {
-                status.innerText = "HATALI YANIT ❌";
-                status.className = "text-3xl font-black text-center mb-4 text-red-500";
-            }
-
-            document.getElementById('correct-ans-text').innerText = data.correctText;
-            
-            const graph = document.getElementById('mini-graph');
-            graph.innerHTML = '';
-            const labels = ['A','B','C','D'];
-            const colors = ['bg-red-500','bg-blue-500','bg-yellow-500','bg-green-600'];
-            const maxVal = Math.max(...data.stats) || 1;
-
-            data.stats.forEach((count, i) => {
-                const width = (count / maxVal) * 100;
-                graph.innerHTML += `
-                    <div class="flex items-center gap-2">
-                        <div class="w-5 font-bold text-[10px]">${labels[i]}</div>
-                        <div class="flex-grow h-4 bg-slate-800 rounded-full overflow-hidden">
-                            <div class="${colors[i]} h-full transition-all duration-1000" style="width: ${width}%"></div>
-                        </div>
-                        <div class="w-5 text-right text-[10px]">${count}</div>
+            const g = document.getElementById('mini-graph'); g.innerHTML = '';
+            const colors = ['bg-rose-500','bg-sky-500','bg-amber-500','bg-emerald-600'];
+            const max = Math.max(...d.stats) || 1;
+            d.stats.forEach((c, i) => {
+                const w = (c/max)*100;
+                g.innerHTML += `<div class="flex items-center gap-3">
+                    <div class="w-4 font-bold text-xs">${['A','B','C','D'][i]}</div>
+                    <div class="flex-grow h-4 bg-white/10 rounded-full overflow-hidden">
+                        <div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div>
                     </div>
-                `;
+                    <div class="w-4 text-right text-xs">${c}</div>
+                </div>`;
             });
         });
 
-        socket.on('show-leaderboard', (sortedPlayers) => {
+        socket.on('show-leaderboard', (list) => {
             toggle('leaderboard-screen');
-            const list = document.getElementById('player-score-list');
-            list.innerHTML = sortedPlayers.map((p, i) => `
-                <div class="flex justify-between items-center ${p.nickname === myName ? 'bg-yellow-600/40 border border-yellow-500' : 'bg-slate-800'} p-3 rounded-lg shadow-sm">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-yellow-500 text-sm">#${i+1}</span>
-                        <span class="font-semibold text-xs truncate max-w-[120px]">${p.nickname}</span>
-                    </div>
-                    <span class="font-bold text-green-400 text-xs">${Math.floor(p.score)} Puan</span>
+            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `
+                <div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-600 ring-2 ring-white' : 'bg-white/5'} p-4 rounded-2xl">
+                    <span class="font-black text-indigo-300">#${i+1} ${p.nickname}</span>
+                    <span class="font-bold">${Math.floor(p.score)} P</span>
                 </div>
             `).join('');
         });
 
-        socket.on('game-over', () => {
-            toggle('waiting-screen');
-            document.querySelector('#waiting-screen h2').innerText = "OTURUM SONLANDI";
-            document.querySelector('#waiting-screen p').innerText = "Başarı sıralaması ana ekrana yansıtılmıştır.";
-        });
-
         function toggle(id) {
-            ['login-screen', 'waiting-screen', 'game-controller', 'stats-screen', 'leaderboard-screen'].forEach(s => {
-                document.getElementById(s).classList.add('hidden');
-            });
+            ['login-screen','waiting-screen','game-controller','stats-screen','leaderboard-screen'].forEach(x => document.getElementById(x).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
     </script>
