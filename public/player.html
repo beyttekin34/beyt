@@ -4,11 +4,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Veteriner Klinik Arena</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .selected { outline: 6px solid white; transform: scale(1.05); z-index: 50; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         .dimmed { opacity: 0.05; }
         .grid-item { min-height: 120px; }
+        .gold-glow { box-shadow: 0 0 20px rgba(234, 179, 8, 0.6); border-color: rgba(234, 179, 8, 1); }
     </style>
 </head>
 <body class="bg-slate-950 text-white font-sans min-h-screen overflow-y-auto pb-10">
@@ -71,9 +73,7 @@
         socket.on('join-success', () => { show('waiting-screen'); document.getElementById('bar').classList.remove('hidden'); window.scrollTo(0,0); });
         socket.on('new-question', (d) => {
             show('game'); window.scrollTo(0,0);
-            document.getElementById('q-idx').innerText = `SORU: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; 
-            // Dinamik süreyi buradan alır
-            document.getElementById('p-timer').innerText = d.time;
+            document.getElementById('q-idx').innerText = `SORU: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; document.getElementById('p-timer').innerText = d.time;
             for(let i=0; i<4; i++){ const b=document.getElementById(`b-${i}`); b.classList.remove('selected','dimmed'); b.querySelector('.t').innerText=d.options[i]; b.disabled = false; }
         });
         socket.on('timer-tick', (t) => document.getElementById('p-timer').innerText = t);
@@ -89,7 +89,31 @@
             d.stats.forEach((c, i) => { const w = (c/max)*100; g.innerHTML += `<div class="flex items-center gap-2"><div class="text-[10px] w-3 font-black">${['A','B','C','D'][i]}</div><div class="flex-grow h-3 bg-white/10 rounded-full overflow-hidden"><div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div></div><div class="text-[10px] w-3 text-right font-black">${c}</div></div>`; });
         });
         socket.on('show-leaderboard', (list) => { show('lb'); document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-700 ring-2 ring-white' : 'bg-white/5'} p-3 rounded-xl"><span class="text-[10px] font-black uppercase">#${i+1} ${p.nickname}</span><span class="text-[10px] font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join(''); });
-        socket.on('game-over', (list) => { show('lb'); document.getElementById('lb-title').innerText = "OYUN BİTTİ"; const myFinal = list.find(p => p.nickname === me); if(myFinal) { document.getElementById('lb-list').innerHTML = `<div class="bg-indigo-600 p-6 rounded-3xl text-center mb-6 shadow-2xl"><h3 class="text-xs opacity-70 mb-2 uppercase italic font-black">Final Başarı Puanın</h3><div class="text-5xl font-black">${Math.floor(myFinal.score)}</div></div>` + document.getElementById('lb-list').innerHTML; } });
+
+        // --- KONFETİ VE FİNAL GÖRSELİ (OYUNCU) ---
+        socket.on('game-over', (list) => {
+            show('lb');
+            document.getElementById('lb-title').innerText = "YARIŞMA SONA ERDİ";
+            
+            // Konfeti Patlatma (Mobilde daha az yoğunlukta)
+            confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+
+            const myFinal = list.find(p => p.nickname === me);
+            if(myFinal) {
+                let rank = list.findIndex(p => p.nickname === me) + 1;
+                let rankClass = rank === 1 ? 'gold-glow bg-yellow-600/40' : 'bg-indigo-600';
+                let rankText = rank === 1 ? '🥇 ŞAMPİYON 🥇' : `SIRALAMAN: #${rank}`;
+                
+                document.getElementById('lb-list').innerHTML = `
+                    <div class="${rankClass} p-6 rounded-3xl text-center mb-6 shadow-2xl border-2 animate-bounce">
+                        <h3 class="text-lg font-black uppercase mb-2">${rankText}</h3>
+                        <div class="text-5xl font-black">${Math.floor(myFinal.score)} PUAN</div>
+                        <p class="text-[10px] opacity-80 mt-2 uppercase italic">Veteriner Klinik Arena</p>
+                    </div>
+                ` + document.getElementById('lb-list').innerHTML;
+            }
+        });
+
         function show(id) { ['login-screen','waiting-screen','game','stats','lb'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
 </body>
