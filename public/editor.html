@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vaka Düzenleme Paneli</title>
+    <title>Soru Düzenleme Paneli</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 p-6 min-h-screen font-sans overflow-y-auto">
     <div class="max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-10 mt-4">
-            <h1 class="text-3xl font-black text-indigo-900 tracking-tighter uppercase">Müfredat Editörü</h1>
+            <h1 class="text-3xl font-black text-indigo-900 tracking-tighter uppercase italic">Sınav Müfredatı Editörü</h1>
             <div class="space-x-2">
-                <button onclick="addQ()" class="bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-emerald-600 transition">+ YENİ VAKA</button>
-                <button onclick="save()" class="bg-indigo-700 text-white px-8 py-3 rounded-xl font-black shadow-xl hover:bg-indigo-800 transition">KAYDET VE DÖN</button>
+                <button onclick="addQ()" class="bg-emerald-500 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:bg-emerald-600 transition">+ YENİ SORU EKLE</button>
+                <button onclick="save()" class="bg-indigo-700 text-white px-8 py-3 rounded-xl font-black shadow-xl hover:bg-indigo-800 transition uppercase">KAYDET VE DÖN</button>
             </div>
         </div>
         <div id="q-list" class="space-y-6 pb-20"></div>
@@ -20,7 +20,6 @@
         let qData = [];
         let auth = { user: 'ali', pass: 'ali321' };
 
-        // Oturum Kontrolü
         if (localStorage.getItem('admin_auth') !== 'true') { window.location.href = "admin.html"; }
 
         async function load() {
@@ -32,9 +31,15 @@
         function render() {
             document.getElementById('q-list').innerHTML = qData.map((q, i) => `
                 <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-indigo-600 relative">
-                    <button onclick="rem(${i})" class="absolute top-6 right-6 text-red-500 font-black text-[10px] hover:underline uppercase">Vakayı Sil</button>
-                    <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg font-black text-[10px] uppercase mb-4 inline-block">Soru #${i+1}</span>
-                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-4 border-2 rounded-2xl font-bold mb-6 text-base outline-none focus:border-indigo-600 transition" placeholder="Soru metni...">${q.text}</textarea>
+                    <button onclick="rem(${i})" class="absolute top-6 right-6 text-red-500 font-black text-[10px] hover:underline uppercase">Soruyu Sil</button>
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-lg font-black text-[10px] uppercase italic">Kayıtlı Soru #${i+1}</span>
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] font-black uppercase text-slate-500">Süre (sn):</label>
+                            <input type="number" value="${q.time || 10}" onchange="qData[${i}].time=parseInt(this.value)" class="w-16 p-1 border-2 rounded-lg text-xs font-bold text-center border-indigo-200 focus:border-indigo-600 outline-none">
+                        </div>
+                    </div>
+                    <textarea onchange="qData[${i}].text=this.value" class="w-full p-4 border-2 rounded-2xl font-bold mb-6 text-base outline-none focus:border-indigo-600 transition" placeholder="Buraya sorunuzu yazınız...">${q.text}</textarea>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         ${q.options.map((o, oi) => `
                             <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -47,8 +52,8 @@
             `).join('');
         }
 
-        function addQ() { qData.push({text:"Yeni Vaka Sorusu?", options:["A Şıkkı","B Şıkkı","C Şıkkı","D Şıkkı"], correct:0}); render(); }
-        function rem(i) { if(confirm('Bu vakayı silmek istediğinize emin misiniz?')) { qData.splice(i,1); render(); } }
+        function addQ() { qData.push({text:"Yeni Soru Metni?", options:["A Şıkkı","B Şıkkı","C Şıkkı","D Şıkkı"], correct:0, time: 10}); render(); }
+        function rem(i) { if(confirm('Bu soruyu silmek istiyor musunuz?')) { qData.splice(i,1); render(); } }
 
         async function save() {
             const res = await fetch('/api/questions', {
@@ -57,7 +62,7 @@
                 body: JSON.stringify({ ...auth, newQuestions: qData })
             });
             const data = await res.json();
-            if(data.success) { alert("Müfredat güncellendi!"); window.location.href = "admin.html"; }
+            if(data.success) { alert("Soru bankası güncellendi!"); window.location.href = "admin.html"; }
         }
         load();
     </script>

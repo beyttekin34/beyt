@@ -60,6 +60,7 @@ io.on('connection', (socket) => {
         if (player) {
             answers[socket.id] = answerIndex;
             if (answerIndex === questions[currentQuestionIndex].correct) {
+                // Küsüratlı puanlama ve hız bonusu
                 const bonus = (timeLeft * 37) + (Math.floor(Math.random() * 41) + 12);
                 player.score += 500 + bonus;
                 player.correctAnswers += 1;
@@ -80,8 +81,11 @@ function sendNextQuestion() {
         isGameRunning = false;
         return;
     }
+
     answers = {}; 
-    timeLeft = 10;
+    // Soruya özel süreyi çek, yoksa varsayılan 10 saniye yap
+    timeLeft = questions[currentQuestionIndex].time || 10;
+    
     io.emit('new-question', { 
         text: questions[currentQuestionIndex].text, 
         options: questions[currentQuestionIndex].options,
@@ -89,6 +93,7 @@ function sendNextQuestion() {
         total: questions.length,
         time: timeLeft
     });
+
     if(timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Katılımcı Ekranı</title>
+    <title>Veteriner Klinik Arena</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -14,25 +14,25 @@
 <body class="bg-slate-950 text-white font-sans min-h-screen overflow-y-auto pb-10">
 
     <div id="bar" class="hidden sticky top-0 bg-indigo-900 p-3 flex justify-between items-center shadow-2xl z-40">
-        <div class="flex flex-col"><span id="p-name" class="font-black text-[10px] truncate max-w-[100px] uppercase"></span><span id="q-idx" class="text-[8px] opacity-60 font-bold">VAKA: 0/0</span></div>
-        <div class="bg-black/30 px-3 py-1 rounded-full font-black text-[10px] text-indigo-300">SÜRE: <span id="p-timer">10</span></div>
+        <div class="flex flex-col"><span id="p-name" class="font-black text-[10px] truncate max-w-[100px] uppercase"></span><span id="q-idx" class="text-[8px] opacity-60 font-bold">SORU: 0/0</span></div>
+        <div class="bg-black/30 px-3 py-1 rounded-full font-black text-[10px] text-indigo-300 uppercase">SÜRE: <span id="p-timer">10</span></div>
     </div>
 
     <div id="login-screen" class="min-h-screen flex flex-col items-center justify-center p-8 space-y-6">
-        <h1 class="text-3xl font-black text-indigo-400 text-center tracking-tighter uppercase leading-none">Veteriner<br>Klinik Oturum</h1>
+        <h1 class="text-4xl font-black text-indigo-400 text-center tracking-tighter uppercase leading-none italic">VETERİNER<br>KLİNİK ARENA</h1>
         <input type="text" id="nick" placeholder="ADINIZ SOYADINIZ" class="w-full p-4 text-center bg-white/5 border-2 border-white/10 rounded-2xl outline-none focus:border-indigo-600 font-black uppercase text-lg">
-        <button onclick="join()" class="w-full bg-indigo-700 py-4 rounded-2xl text-xl font-black shadow-2xl active:scale-95 transition-all">OTURUMA KATIL</button>
+        <button onclick="join()" class="w-full bg-indigo-700 py-4 rounded-2xl text-xl font-black shadow-2xl active:scale-95 transition-all">ARENAYA GİRİŞ YAP</button>
     </div>
 
     <div id="waiting-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-10 text-center">
         <div class="animate-pulse space-y-4">
-            <h2 class="text-3xl font-black text-indigo-400 uppercase">Hazır Olun</h2>
-            <p class="text-xs opacity-50 font-bold italic">Vaka analizi başlatılması bekleniyor...</p>
+            <h2 class="text-3xl font-black text-indigo-400 uppercase">BAĞLANTI TAMAM</h2>
+            <p class="text-xs opacity-50 font-bold italic text-white/50 uppercase">Sorular Bekleniyor...</p>
         </div>
     </div>
 
     <div id="game" class="hidden p-4 space-y-4 mt-4">
-        <div class="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-xl">
+        <div class="bg-white/5 p-5 rounded-3xl border border-white/10 shadow-xl">
             <h2 id="q-text" class="text-sm font-black text-center leading-relaxed"></h2>
         </div>
         <div class="grid grid-cols-2 gap-2 pb-10">
@@ -52,16 +52,16 @@
     </div>
 
     <div id="stats" class="hidden p-6 flex flex-col min-h-screen">
-        <h2 id="res" class="text-3xl font-black text-center mb-6"></h2>
+        <h2 id="res" class="text-4xl font-black text-center mb-6"></h2>
         <div class="bg-indigo-600/20 p-4 rounded-2xl mb-8 border-l-8 border-indigo-600">
-            <p class="text-[8px] font-black text-indigo-400 uppercase mb-1">Doğru Yaklaşım:</p>
+            <p class="text-[8px] font-black text-indigo-400 uppercase mb-1">Doğru Yanıt:</p>
             <p id="cor" class="text-xs font-black"></p>
         </div>
         <div id="graph" class="space-y-4"></div>
     </div>
 
     <div id="lb" class="hidden p-6 flex flex-col min-h-screen">
-        <h2 id="lb-title" class="text-xl font-black text-center text-indigo-400 mb-8 uppercase tracking-widest">Sıralama</h2>
+        <h2 id="lb-title" class="text-xl font-black text-center text-indigo-400 mb-8 uppercase tracking-widest italic">Anlık Durum</h2>
         <div id="lb-list" class="space-y-2"></div>
     </div>
 
@@ -71,7 +71,9 @@
         socket.on('join-success', () => { show('waiting-screen'); document.getElementById('bar').classList.remove('hidden'); window.scrollTo(0,0); });
         socket.on('new-question', (d) => {
             show('game'); window.scrollTo(0,0);
-            document.getElementById('q-idx').innerText = `VAKA: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; document.getElementById('p-timer').innerText = d.time;
+            document.getElementById('q-idx').innerText = `SORU: ${d.qIndex}/${d.total}`; document.getElementById('q-text').innerText = d.text; 
+            // Dinamik süreyi buradan alır
+            document.getElementById('p-timer').innerText = d.time;
             for(let i=0; i<4; i++){ const b=document.getElementById(`b-${i}`); b.classList.remove('selected','dimmed'); b.querySelector('.t').innerText=d.options[i]; b.disabled = false; }
         });
         socket.on('timer-tick', (t) => document.getElementById('p-timer').innerText = t);
@@ -79,7 +81,7 @@
         socket.on('question-result-data', (d) => {
             show('stats'); const myA = d.playersAnswers[socket.id];
             document.getElementById('res').innerText = (myA === d.correctIndex) ? "DOĞRU ✅" : "HATALI ❌";
-            document.getElementById('res').className = `text-3xl font-black text-center mb-6 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
+            document.getElementById('res').className = `text-4xl font-black text-center mb-6 ${myA === d.correctIndex ? 'text-emerald-400' : 'text-rose-500'}`;
             document.getElementById('cor').innerText = d.correctText;
             const g = document.getElementById('graph'); g.innerHTML = '';
             const max = Math.max(...d.stats) || 1;
@@ -87,7 +89,7 @@
             d.stats.forEach((c, i) => { const w = (c/max)*100; g.innerHTML += `<div class="flex items-center gap-2"><div class="text-[10px] w-3 font-black">${['A','B','C','D'][i]}</div><div class="flex-grow h-3 bg-white/10 rounded-full overflow-hidden"><div class="${colors[i]} h-full transition-all duration-1000" style="width:${w}%"></div></div><div class="text-[10px] w-3 text-right font-black">${c}</div></div>`; });
         });
         socket.on('show-leaderboard', (list) => { show('lb'); document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="flex justify-between items-center ${p.nickname === me ? 'bg-indigo-700 ring-2 ring-white' : 'bg-white/5'} p-3 rounded-xl"><span class="text-[10px] font-black uppercase">#${i+1} ${p.nickname}</span><span class="text-[10px] font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join(''); });
-        socket.on('game-over', (list) => { show('lb'); document.getElementById('lb-title').innerText = "OTURUM SONA ERDİ"; const myFinal = list.find(p => p.nickname === me); if(myFinal) { document.getElementById('lb-list').innerHTML = `<div class="bg-indigo-600 p-6 rounded-3xl text-center mb-6"><h3 class="text-xs opacity-70 mb-2 uppercase">Toplam Puanın</h3><div class="text-5xl font-black">${Math.floor(myFinal.score)}</div></div>` + document.getElementById('lb-list').innerHTML; } });
+        socket.on('game-over', (list) => { show('lb'); document.getElementById('lb-title').innerText = "OYUN BİTTİ"; const myFinal = list.find(p => p.nickname === me); if(myFinal) { document.getElementById('lb-list').innerHTML = `<div class="bg-indigo-600 p-6 rounded-3xl text-center mb-6 shadow-2xl"><h3 class="text-xs opacity-70 mb-2 uppercase italic font-black">Final Başarı Puanın</h3><div class="text-5xl font-black">${Math.floor(myFinal.score)}</div></div>` + document.getElementById('lb-list').innerHTML; } });
         function show(id) { ['login-screen','waiting-screen','game','stats','lb'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
 </body>
