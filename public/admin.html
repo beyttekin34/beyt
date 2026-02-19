@@ -7,62 +7,60 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .gold-glow { box-shadow: 0 0 30px rgba(234, 179, 8, 0.8); border-color: rgba(234, 179, 8, 1); }
-        .silver-glow { box-shadow: 0 0 30px rgba(156, 163, 175, 0.8); border-color: rgba(156, 163, 175, 1); }
-        .bronze-glow { box-shadow: 0 0 30px rgba(180, 83, 9, 0.8); border-color: rgba(180, 83, 9, 1); }
+        .gold-glow { box-shadow: 0 0 30px rgba(234, 179, 8, 0.8); border-color: #eab308; }
+        .silver-glow { box-shadow: 0 0 30px rgba(156, 163, 175, 0.8); border-color: #9ca3af; }
+        .bronze-glow { box-shadow: 0 0 30px rgba(180, 83, 9, 0.8); border-color: #b45309; }
+        @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-bounce-subtle { animation: bounce-subtle 3s infinite ease-in-out; }
     </style>
 </head>
-<body class="bg-slate-950 text-white font-sans min-h-screen overflow-y-auto">
+<body class="bg-slate-950 text-white font-sans min-h-screen overflow-y-auto pb-10">
 
     <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-6 hidden">
         <div class="bg-white/5 p-10 rounded-3xl border border-white/10 w-full max-w-md text-center backdrop-blur-md">
             <h2 class="text-3xl font-black mb-8 text-indigo-400 uppercase italic">Hoca Girişi</h2>
             <input type="text" id="u" placeholder="Kullanıcı Adı" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 mb-4 outline-none">
             <input type="password" id="p" placeholder="Şifre" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 mb-8 outline-none">
-            <button onclick="login()" class="w-full bg-indigo-600 p-4 rounded-xl font-black shadow-lg">OTURUMU AÇ</button>
+            <button onclick="login()" class="w-full bg-indigo-600 p-4 rounded-xl font-black shadow-lg">GİRİŞ YAP</button>
         </div>
     </div>
 
-    <div id="dashboard" class="hidden min-h-screen flex flex-col items-center justify-center space-y-12 p-8 text-center">
-        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase italic">SORU YÖNETİM MERKEZİ</h1>
+    <div id="dashboard" class="hidden min-h-screen flex flex-col items-center justify-center space-y-12 p-8">
+        <h1 class="text-6xl font-black text-indigo-400 tracking-tighter uppercase italic text-center">SORU YÖNETİM MERKEZİ</h1>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-3xl font-black hover:scale-105 transition-all shadow-2xl">YARIŞMA LOBİSİ</button>
+            <button onclick="showLobby()" class="bg-emerald-600 p-16 rounded-3xl text-3xl font-black hover:scale-105 transition-all shadow-2xl uppercase">Yarışma Lobisi</button>
             <a href="editor.html" class="bg-indigo-600 p-16 rounded-3xl text-3xl font-black text-center hover:scale-105 transition-all shadow-2xl flex items-center justify-center uppercase">Soruları Düzenle</a>
         </div>
     </div>
 
     <div id="lobby" class="hidden min-h-screen flex flex-col items-center justify-center p-10">
-        <h2 class="text-4xl font-black mb-8 text-indigo-300 uppercase italic text-center">Kayıtlı Öğrenciler: <span id="count">0</span></h2>
-        
-        <div class="bg-white p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(79,70,229,0.5)] mb-12 flex flex-col items-center animate-bounce-subtle">
+        <h2 class="text-4xl font-black mb-6 text-indigo-300 uppercase italic">Öğrenciler: <span id="count">0</span></h2>
+        <div class="bg-white p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(79,70,229,0.5)] mb-10 flex flex-col items-center animate-bounce-subtle">
             <div id="qrcode" class="p-2"></div>
-            <p class="text-indigo-900 font-black text-xl uppercase mt-4 tracking-widest">GİRİŞ İÇİN OKUTUN</p>
+            <p class="text-indigo-900 font-black text-xl mt-4 tracking-widest uppercase">GİRİŞ İÇİN OKUTUN</p>
         </div>
-        
-        <div id="list" class="flex flex-wrap justify-center gap-4 mb-16 w-full max-w-5xl"></div>
+        <div id="list" class="flex flex-wrap justify-center gap-4 mb-16 max-w-5xl"></div>
         <div class="flex gap-6">
-            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-20 py-8 rounded-full text-5xl font-black shadow-2xl hover:bg-indigo-500 transition-all active:scale-95">YARIŞMAYI BAŞLAT</button>
-            <button onclick="show('dashboard')" class="bg-slate-700 px-10 py-8 rounded-full text-2xl font-bold hover:bg-slate-600 transition-all">GERİ DÖN</button>
+            <button onclick="socket.emit('start-game')" class="bg-indigo-600 px-16 py-6 rounded-full text-4xl font-black shadow-2xl hover:bg-indigo-500 transition-all">BAŞLAT</button>
+            <button onclick="show('dashboard')" class="bg-slate-700 px-8 py-6 rounded-full text-xl font-bold">GERİ</button>
         </div>
     </div>
 
     <div id="game" class="hidden p-6 flex flex-col items-center">
         <div class="flex justify-between w-full max-w-6xl mb-12 mt-10">
             <div class="text-3xl font-black text-indigo-400">MEVCUT: <span id="q-idx">0/0</span></div>
-            <div class="w-24 h-24 rounded-full border-8 border-indigo-500 flex items-center justify-center text-4xl font-black animate-pulse">
-                <span id="timer">10</span>
-            </div>
+            <div class="w-20 h-20 rounded-full border-4 border-indigo-500 flex items-center justify-center text-3xl font-black animate-pulse"><span id="timer">10</span></div>
         </div>
-        <h2 id="q-text" class="text-5xl font-black text-center mb-16 max-w-5xl leading-tight text-white italic"></h2>
+        <h2 id="q-text" class="text-4xl font-black text-center mb-12 max-w-5xl leading-tight italic"></h2>
         <div id="options" class="grid grid-cols-2 gap-6 w-full max-w-6xl"></div>
         <div id="stats" class="hidden w-full max-w-4xl mt-12 bg-white/5 p-8 rounded-3xl border border-white/10 shadow-2xl">
-            <h3 class="text-2xl font-bold mb-6 text-center text-indigo-300 uppercase">ÖĞRENCİ YANIT DAĞILIMI</h3>
+            <h3 class="text-2xl font-bold mb-6 text-center text-indigo-300">YANIT DAĞILIMI</h3>
             <div id="graph" class="space-y-4"></div>
         </div>
     </div>
 
     <div id="leaderboard" class="hidden min-h-screen flex flex-col items-center justify-center p-10">
-        <h1 id="lb-title" class="text-7xl font-black mb-16 text-indigo-400 uppercase tracking-tighter italic">Başarı Sıralaması</h1>
+        <h1 id="lb-title" class="text-6xl font-black mb-16 text-indigo-400 uppercase tracking-tighter italic">Sıralama</h1>
         <div id="lb-list" class="w-full max-w-4xl space-y-4"></div>
     </div>
 
@@ -81,20 +79,12 @@
         function showLobby() { 
             show('lobby');
             if (!qrGenerated) {
-                const joinLink = window.location.origin;
-                new QRCode(document.getElementById("qrcode"), {
-                    text: joinLink,
-                    width: 350,
-                    height: 350,
-                    colorDark : "#1e1b4b", 
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
+                new QRCode(document.getElementById("qrcode"), { text: window.location.origin, width: 350, height: 350, colorDark : "#1e1b4b", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
                 qrGenerated = true;
             }
         }
 
-        socket.on('update-player-list', (p) => { document.getElementById('count').innerText = p.length; document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600 px-6 py-2 rounded-full font-bold border border-indigo-400 shadow-xl animate-fade-in">${x.nickname}</div>`).join(''); });
+        socket.on('update-player-list', (p) => { document.getElementById('count').innerText = p.length; document.getElementById('list').innerHTML = p.map(x => `<div class="bg-indigo-600 px-6 py-2 rounded-full font-bold border border-indigo-400 shadow-xl">${x.nickname}</div>`).join(''); });
 
         socket.on('new-question', (d) => {
             show('game'); document.getElementById('stats').classList.add('hidden');
@@ -104,6 +94,7 @@
         });
 
         socket.on('timer-tick', (t) => document.getElementById('timer').innerText = t);
+        
         socket.on('question-result-data', (d) => {
             document.getElementById('stats').classList.remove('hidden');
             for(let i=0; i<4; i++) { const el = document.getElementById(`opt-${i}`); if(i === d.correctIndex) el.classList.add('ring-8', 'ring-white', 'scale-105'); else el.classList.add('opacity-10'); }
@@ -115,60 +106,24 @@
 
         socket.on('show-leaderboard', (list) => { 
             show('leaderboard'); 
-            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `
-                <div class="flex justify-between items-center bg-white/5 p-6 rounded-3xl border-l-8 border-indigo-500 animate-fade-in">
-                    <span class="text-3xl font-black">#${i+1} ${p.nickname}</span>
-                    <span class="text-3xl font-black text-emerald-400">${Math.floor(p.score)} P</span>
-                </div>
-            `).join(''); 
+            document.getElementById('lb-list').innerHTML = list.slice(0,5).map((p, i) => `<div class="bg-white/5 p-6 rounded-3xl border-l-8 border-indigo-500 flex justify-between"><span class="text-3xl font-black">#${i+1} ${p.nickname}</span><span class="text-3xl font-black text-emerald-400">${Math.floor(p.score)} P</span></div>`).join(''); 
         });
 
-        // --- KONFETİ VE FİNAL GÖRSELİ ---
         socket.on('game-over', (list) => {
             show('leaderboard');
             document.getElementById('lb-title').innerText = "YARIŞMA ŞAMPİYONLARI";
+            confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
             
-            // Konfeti Patlatma Efekti
-            var duration = 5 * 1000;
-            var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-
-            var interval = setInterval(function() {
-                var timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) { return clearInterval(interval); }
-                var particleCount = 50 * (timeLeft / duration);
-                // Rastgele konfetiler
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
-
-            // İlk 3'ü Vurgulayan Özel Tasarım
-            let lbContent = "";
+            let finalHtml = "";
             list.slice(0,3).forEach((p, i) => {
-                let glowClass = i === 0 ? 'gold-glow bg-yellow-600/30' : (i === 1 ? 'silver-glow bg-gray-500/30' : 'bronze-glow bg-orange-700/30');
+                let glow = i === 0 ? 'gold-glow bg-yellow-600/30' : (i === 1 ? 'silver-glow bg-gray-500/30' : 'bronze-glow bg-orange-700/30');
                 let medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : '🥉');
-                lbContent += `
-                    <div class="flex justify-between items-center p-8 rounded-[2rem] border-4 mb-4 animate-bounce-subtle ${glowClass}">
-                        <div class="flex items-center gap-6">
-                            <span class="text-6xl">${medal}</span>
-                            <span class="text-5xl font-black uppercase">${p.nickname}</span>
-                        </div>
-                        <span class="text-5xl font-black">${Math.floor(p.score)} P</span>
-                    </div>
-                `;
+                finalHtml += `<div class="flex justify-between items-center p-8 rounded-[2rem] border-4 mb-4 animate-bounce-subtle ${glow}"><div class="flex items-center gap-6"><span class="text-6xl">${medal}</span><span class="text-5xl font-black uppercase">${p.nickname}</span></div><span class="text-5xl font-black">${Math.floor(p.score)} P</span></div>`;
             });
-
-            document.getElementById('lb-list').innerHTML = lbContent + `<button onclick="location.reload()" class="mt-12 bg-indigo-600 px-16 py-6 rounded-full font-black text-3xl shadow-2xl hover:bg-indigo-500 transition-all">YENİ OTURUM</button>`;
+            document.getElementById('lb-list').innerHTML = finalHtml + `<button onclick="location.reload()" class="mt-12 bg-indigo-600 px-16 py-6 rounded-full font-black text-3xl shadow-2xl">YENİ OTURUM</button>`;
         });
 
         function show(id) { ['dashboard','lobby','game','leaderboard'].forEach(x => document.getElementById(x).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
     </script>
-    <style>
-        @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .animate-bounce-subtle { animation: bounce-subtle 3s infinite ease-in-out; }
-        .animate-fade-in { animation: fadeIn 0.5s ease-in; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
 </body>
 </html>

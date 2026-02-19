@@ -32,6 +32,7 @@ let isGameRunning = false;
 let answers = {};
 let timerInterval = null;
 let timeLeft = 10;
+let phaseEnding = false; // Cakislamari onleyen kilit
 
 io.on('connection', (socket) => {
     socket.on('admin-login', (data) => {
@@ -55,14 +56,16 @@ io.on('connection', (socket) => {
     });
 
     socket.on('submit-answer', (answerIndex) => {
-        if (!isGameRunning || answers[socket.id] !== undefined) return;
+        if (!isGameRunning || answers[socket.id] !== undefined || phaseEnding) return;
         const player = players[socket.id];
         if (player) {
             answers[socket.id] = answerIndex;
             if (answerIndex === questions[currentQuestionIndex].correct) {
-                // Küsüratlı puanlama ve hız bonusu
-                const bonus = (timeLeft * 37) + (Math.floor(Math.random() * 41) + 12);
-                player.score += 500 + bonus;
+                // Kusuratli puanlama ve hiz bonusu
+                const base = 500;
+                const speedBonus = timeLeft * 37;
+                const randomExtra = Math.floor(Math.random() * 41) + 12; 
+                player.score += base + speedBonus + randomExtra;
                 player.correctAnswers += 1;
             }
         }
@@ -83,7 +86,7 @@ function sendNextQuestion() {
     }
 
     answers = {}; 
-    // Soruya özel süreyi çek, yoksa varsayılan 10 saniye yap
+    phaseEnding = false;
     timeLeft = questions[currentQuestionIndex].time || 10;
     
     io.emit('new-question', { 
@@ -96,6 +99,7 @@ function sendNextQuestion() {
 
     if(timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
+        if(phaseEnding) return;
         timeLeft--;
         io.emit('timer-tick', timeLeft);
         if (timeLeft <= 0) {
@@ -107,16 +111,24 @@ function sendNextQuestion() {
 }
 
 function endQuestionPhase() {
+    if(phaseEnding) return;
+    phaseEnding = true;
+
     const stats = [0, 0, 0, 0];
     Object.values(answers).forEach(ans => { if (ans >= 0) stats[ans]++; });
+    
     io.emit('question-result-data', {
         correctIndex: questions[currentQuestionIndex].correct,
         correctText: questions[currentQuestionIndex].options[questions[currentQuestionIndex].correct],
         stats: stats,
         playersAnswers: answers
     });
+
+    // 5 Saniye Analiz, 5 Saniye Liderlik
     setTimeout(() => {
-        io.emit('show-leaderboard', Object.values(players).sort((a, b) => b.score - a.score));
+        const sorted = Object.values(players).sort((a, b) => b.score - a.score);
+        io.emit('show-leaderboard', sorted);
+        
         setTimeout(() => {
             currentQuestionIndex++;
             sendNextQuestion();
@@ -125,4 +137,4 @@ function endQuestionPhase() {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Sunucu aktif.`));
+server.listen(PORT, () => console.log(`Arena Motoru Aktif.`));
